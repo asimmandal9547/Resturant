@@ -1,0 +1,45 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dashboard</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='styles.css') }}">
+    <script>
+        function viewRegistrationData() {
+            window.open("/edit_view", "_blank");
+        }
+
+        function viewQRCode() {
+            window.open("/view_qr", "_blank");
+        }
+    </script>
+</head>
+<body>
+    <div class="card-container">
+        <div class="card" onclick="viewRegistrationData()">
+            <img src="{{ url_for('static', filename='Images/Logos/user.png') }}" alt="Edit/View" class="card-image">
+            <p>Edit/View</p>
+        </div> 
+        <div class="card">
+            <img src="{{ url_for('static', filename='Images/Logos/plus.png') }}" alt="Add Menu" class="card-image">
+            <p>Add Menu</p>
+        </div>
+        <div class="card">
+            <img src="{{ url_for('static', filename='Images/Logos/remove.png') }}" alt="Remove Menu" class="card-image">
+            <p>Remove Menu</p>
+        </div>
+        <div class="card">
+            <img src="{{ url_for('static', filename='Images/Logos/pages.png') }}" alt="View Orders" class="card-image">
+            <p>View Orders</p>
+        </div>
+        <div class="card" onclick="viewQRCode()">
+            <img src="{{ url_for('static', filename='Images/Logos/qr.png') }}" alt="View QR Code" class="card-image">
+            <p>View QR Code</p>
+        </div>
+    </div>
+    <div id="registration-data" class="hidden">
+        <!-- Display registration form data here -->
+    </div>
+</body>
+</html>

@@ -1,0 +1,58 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>QR Code</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='styles.css') }}">
+    <style>
+        .qr-card {
+            background-color: #f8f8f8;
+            border: 1px solid #ddd;
+            border-radius: 10px;
+            padding: 20px;
+            text-align: center;
+            max-width: 300px;
+            margin: 50px auto;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+        }
+
+        .qr-card img {
+            max-width: 100%;
+            height: auto;
+            border-radius: 10px;
+        }
+
+        .qr-card h2 {
+            margin: 20px 0;
+            color: #333;
+        }
+
+        .print-btn {
+            background-color: #ff7f50;
+            color: #fff;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 5px;
+            cursor: pointer;
+            transition: background-color 0.3s ease;
+        }
+
+        .print-btn:hover {
+            background-color: #ff6347;
+        }
+    </style>
+    <script>
+        function printCard() {
+            window.print();
+        }
+    </script>
+</head>
+<body>
+    <div class="qr-card">
+        <img src="/generate_qr" alt="QR Code">
+        <h2>{{ restaurant_name }}</h2>
+        <button class="print-btn" onclick="printCard()">Print</button>
+    </div>
+</body>
+</html>
