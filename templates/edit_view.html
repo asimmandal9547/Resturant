@@ -3,99 +3,172 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Edit/View Registration</title>
+    <title>Edit/View Registration Details</title>
     <link rel="stylesheet" href="{{ url_for('static', filename='styles.css') }}">
     <style>
-        .form-container {
-            max-width: 600px;
-            margin: 50px auto;
-            padding: 20px;
+        body {
+            margin: 0;
+            padding: 0;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
             background-color: #f8f8f8;
-            border: 1px solid #ddd;
+        }
+
+        .edit-container {
+            background-color: rgba(255, 255, 255, 0.9);
+            padding: 20px;
             border-radius: 10px;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+            width: 90%;
+            max-width: 600px;
+            box-sizing: border-box;
+            text-align: center;
         }
 
-        .form-group {
-            margin-bottom: 15px;
+        h2 {
+            margin-bottom: 20px;
+            color: #333;
         }
 
-        .form-group label {
-            display: block;
-            margin-bottom: 5px;
-        }
-
-        .form-group input,
-        .form-group select {
-            width: 100%;
-            padding: 10px;
-            border: 1px solid #ddd;
-            border-radius: 5px;
-        }
-
-        .profile-picture {
+        form {
             display: flex;
             flex-direction: column;
             align-items: center;
         }
 
+        input[type="text"],
+        input[type="email"],
+        input[type="password"],
+        select,
+        button {
+            width: 100%;
+            max-width: 400px;
+            padding: 10px;
+            margin-bottom: 15px;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+            outline: none;
+            box-sizing: border-box;
+        }
+
+        .profile-picture {
+            margin-bottom: 15px;
+        }
+
         .profile-picture img {
             max-width: 150px;
-            max-height: 150px;
             border-radius: 50%;
             margin-bottom: 10px;
         }
 
-        .btn {
+        .profile-picture input[type="file"] {
+            border: none;
+            background: none;
+            padding: 0;
+        }
+
+        button {
             background-color: #ff7f50;
             color: #fff;
-            border: none;
-            padding: 10px 20px;
-            border-radius: 5px;
             cursor: pointer;
+            border: none;
+            border-radius: 5px;
+            padding: 10px 20px;
             transition: background-color 0.3s ease;
         }
 
-        .btn:hover {
+        button:hover {
             background-color: #ff6347;
+        }
+
+        .password-toggle {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            width: 100%;
+            max-width: 400px;
+            margin-bottom: 15px;
+        }
+
+        .password-toggle label {
+            margin-right: 10px;
+        }
+
+        .password-toggle input[type="checkbox"] {
+            cursor: pointer;
+        }
+
+        @media (max-width: 768px) {
+            .edit-container {
+                width: 95%;
+            }
+        }
+
+        @media (max-width: 480px) {
+            .edit-container {
+                width: 100%;
+                padding: 10px;
+            }
+
+            input[type="text"],
+            input[type="email"],
+            input[type="password"],
+            select,
+            button {
+                max-width: 100%;
+            }
+
+            .profile-picture img {
+                max-width: 100px;
+            }
         }
     </style>
 </head>
 <body>
-    <div class="form-container">
-        <form action="/edit_view" method="POST" enctype="multipart/form-data">
-            <div class="form-group">
-                <label for="full_name">Full Name</label>
-                <input type="text" id="full_name" name="full_name" value="{{ user[1] }}" required>
+    <div class="edit-container">
+        <h2>Edit/View Registration Details</h2>
+        <form id="edit-form" action="{{ url_for('update_profile') }}" method="post" enctype="multipart/form-data">
+            <input type="text" name="full_name" placeholder="Full Name" value="{{ user.full_name }}" required>
+            <input type="email" name="email" placeholder="Email Address" value="{{ user.email }}" required>
+            <input type="text" name="contact_number" placeholder="Contact Number" value="{{ user.contact_number }}" required>
+            <input type="text" name="username" placeholder="Username" value="{{ user.username }}" required>
+            <div class="password-toggle">
+                <label for="password">Password</label>
+                <input type="password" id="password" name="password" placeholder="Password" value="{{ user.password }}" required>
+                <input type="checkbox" id="show-password"> Show
             </div>
-            <div class="form-group">
-                <label for="email">Email</label>
-                <input type="email" id="email" name="email" value="{{ user[2] }}" required>
-            </div>
-            <div class="form-group">
-                <label for="contact_number">Contact Number</label>
-                <input type="text" id="contact_number" name="contact_number" value="{{ user[3] }}" required>
-            </div>
-            <div class="form-group">
-                <label for="restaurant_name">Restaurant Name</label>
-                <input type="text" id="restaurant_name" name="restaurant_name" value="{{ user[6] }}" required>
-            </div>
-            <div class="form-group">
-                <label for="restaurant_location">Restaurant Location</label>
-                <input type="text" id="restaurant_location" name="restaurant_location" value="{{ user[7] }}" required>
-            </div>
-            <div class="form-group">
-                <label for="restaurant_type">Restaurant Type</label>
-                <input type="text" id="restaurant_type" name="restaurant_type" value="{{ user[8] }}" required>
-            </div>
-            <div class="form-group profile-picture">
-                <label for="profile_picture">Profile Picture</label>
-                {% if user[9] %}
-                    <img src="{{ url_for('static', filename=user[9]) }}" alt="Profile Picture">
+            <input type="text" name="restaurant_name" placeholder="Restaurant Name" value="{{ user.restaurant_name }}" required>
+            <input type="text" name="restaurant_location" placeholder="Restaurant Location" value="{{ user.restaurant_location }}" required>
+            <select name="restaurant_type" required>
+                <option value="" disabled>Select Restaurant Type</option>
+                <option value="Fast Food" {{ 'selected' if user.restaurant_type == 'Fast Food' else '' }}>Fast Food</option>
+                <option value="Casual Dining" {{ 'selected' if user.restaurant_type == 'Casual Dining' else '' }}>Casual Dining</option>
+                <option value="Fine Dining" {{ 'selected' if user.restaurant_type == 'Fine Dining' else '' }}>Fine Dining</option>
+                <option value="Cafe" {{ 'selected' if user.restaurant_type == 'Cafe' else '' }}>Cafe</option>
+                <option value="Other" {{ 'selected' if user.restaurant_type == 'Other' else '' }}>Other</option>
+            </select>
+            <div class="profile-picture">
+                <label>Profile Picture</label>
+                {% if user.profile_picture %}
+                    <img src="data:image/png;base64,{{ user.profile_picture }}" alt="Profile Picture">
                 {% endif %}
-                <input type="file" id="profile_picture" name="profile_picture">
+                <input type="file" name="profile_picture" accept="image/*">
             </div>
-            <button type="submit" class="btn">Update</button>
+            <button type="submit">Update</button>
         </form>
     </div>
+
+    <script>
+        document.getElementById('show-password').addEventListener('change', function() {
+            const passwordInput = document.getElementById('password');
+            if (this.checked) {
+                passwordInput.type = 'text';
+            } else {
+                passwordInput.type = 'password';
+            }
+        });
+    </script>
 </body>
 </html>
