@@ -1,10 +1,12 @@
-from flask import Flask, render_template, request, redirect, url_for, session, send_file, make_response
+from flask import Flask, render_template, request, redirect, url_for, session, make_response
 import mysql.connector
 from mysql.connector import Error
 import secrets
 import qrcode
 import io
 import base64
+from PIL import Image
+
 
 app = Flask(__name__)
 app.secret_key = secrets.token_hex(16)
@@ -182,6 +184,58 @@ def register():
             print(f"Error while inserting into MySQL: {e}")
             return "An error occurred while registering. Please try again.", 500
     return render_template('register.html')
+
+@app.route('/add_menu', methods=['GET', 'POST'])
+def add_menu():
+    if 'user_id' not in session:
+        return redirect(url_for('login'))
+    
+    connection = create_db_connection()
+    cursor = connection.cursor()
+    
+    if request.method == 'POST':
+        item_name = request.form['item_name']
+        item_description = request.form['item_description']
+        item_price = request.form['item_price']
+        item_image = request.files['item_image'].read()
+        
+        cursor.execute(
+            "INSERT INTO menu_items (item_name, item_description, item_price, item_image, user_id) VALUES (%s, %s, %s, %s, %s)",
+            (item_name, item_description, item_price, item_image, session['user_id'])
+        )
+        connection.commit()
+    
+    cursor.execute("SELECT id, item_name, item_description, item_price, item_image FROM menu_items WHERE user_id = %s", (session['user_id'],))
+    menu_items = cursor.fetchall()
+    cursor.close()
+    connection.close()
+    
+    menu_items = [{'id': item[0], 'name': item[1], 'description': item[2], 'price': item[3], 'image': base64.b64encode(item[4]).decode('utf-8')} for item in menu_items]
+    
+    return render_template('add_menu.html', menu_items=menu_items)
+
+
+@app.route('/remove_menu', methods=['GET', 'POST'])
+def remove_menu():
+    if 'user_id' not in session:
+        return redirect(url_for('login'))
+    
+    connection = create_db_connection()
+    cursor = connection.cursor()
+    
+    if request.method == 'POST':
+        item_id = request.form['item_id']
+        cursor.execute("DELETE FROM menu_items WHERE id = %s AND user_id = %s", (item_id, session['user_id']))
+        connection.commit()
+    
+    cursor.execute("SELECT id, item_name, item_description, item_image FROM menu_items WHERE user_id = %s", (session['user_id'],))
+    menu_items = cursor.fetchall()
+    cursor.close()
+    connection.close()
+    
+    menu_items = [{'id': item[0], 'name': item[1], 'description': item[2], 'image': base64.b64encode(item[3]).decode('utf-8')} for item in menu_items]
+    
+    return render_template('remove_menu.html', menu_items=menu_items)
 
 if __name__ == '__main__':
     app.run(debug=True)
