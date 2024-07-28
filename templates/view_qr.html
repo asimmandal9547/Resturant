@@ -6,6 +6,16 @@
     <title>QR Code</title>
     <link rel="stylesheet" href="{{ url_for('static', filename='styles.css') }}">
     <style>
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #f8f8f8;
+            margin: 0;
+            padding: 0;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+        }
         .qr-card {
             background-color: #f8f8f8;
             border: 1px solid #ddd;
@@ -13,7 +23,6 @@
             padding: 20px;
             text-align: center;
             max-width: 300px;
-            margin: 50px auto;
             box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
         }
 

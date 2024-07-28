@@ -5,7 +5,6 @@ import secrets
 import qrcode
 import io
 import base64
-from PIL import Image
 
 
 app = Flask(__name__)
@@ -99,11 +98,11 @@ def edit_view():
             connection.close()
             if user:
                 user_data = {
-                    'full_name': user[1],
-                    'email': user[2],
-                    'contact_number': user[3],
-                    'username': user[4],
-                    'password': user[5],
+                    'full_name': user[3],
+                    'email': user[4],
+                    'contact_number': user[5],
+                    'username': user[1],
+                    'password': user[2],
                     'restaurant_name': user[6],
                     'restaurant_location': user[7],
                     'restaurant_type': user[8],

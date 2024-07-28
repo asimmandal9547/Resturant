@@ -18,6 +18,11 @@
             window.open("/remove_menu", "_blank");
         }
 
+        function viewOrders() {
+            window.open("/view_orders", "_blank");
+        
+        }
+
         function viewQRCode() {
             window.open("/view_qr", "_blank");
         }
@@ -37,7 +42,7 @@
             <img src="{{ url_for('static', filename='Images/Logos/remove.png') }}" alt="Remove Menu" class="card-image">
             <p>Remove Menu</p>
         </div>
-        <div class="card">
+        <div class="card" onclick="viewOrders()">
             <img src="{{ url_for('static', filename='Images/Logos/pages.png') }}" alt="View Orders" class="card-image">
             <p>View Orders</p>
         </div>
