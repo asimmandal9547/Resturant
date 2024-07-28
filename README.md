@@ -10,6 +10,8 @@ This is a Flask-based web application for managing restaurant user registrations
 - Upload Profile Picture
 - Generate and View QR Code for Restaurant
 - Print QR Code
+- Add Menu items
+- Remove Menu items 
 
 ## Requirements
 
@@ -42,17 +44,31 @@ This is a Flask-based web application for managing restaurant user registrations
     - Create a database named `user_auth_db`.
     - Use the following SQL command to create the `users` table:
         ```sql
+        CREATE DATABASE user_auth_db;
+
+        USE user_auth_db;
+
         CREATE TABLE users (
             id INT AUTO_INCREMENT PRIMARY KEY,
-            full_name VARCHAR(255) NOT NULL,
-            email VARCHAR(255) NOT NULL,
-            contact_number VARCHAR(15) NOT NULL,
-            username VARCHAR(50) NOT NULL,
-            password VARCHAR(255) NOT NULL,
-            restaurant_name VARCHAR(255) NOT NULL,
-            restaurant_location VARCHAR(255) NOT NULL,
-            restaurant_type VARCHAR(255) NOT NULL,
-            profile_picture VARCHAR(255)
+            username VARCHAR(100) NOT NULL UNIQUE,
+            password VARCHAR(100) NOT NULL,
+            full_name VARCHAR(100),
+            email VARCHAR(100),
+            contact_number VARCHAR(20),
+            restaurant_name VARCHAR(100),
+            restaurant_location VARCHAR(100),
+            restaurant_type VARCHAR(50),
+            profile_picture LONGBLOB
+        );
+
+        CREATE TABLE menu_items (
+            id INT AUTO_INCREMENT PRIMARY KEY,
+            user_id INT NOT NULL,
+            item_name VARCHAR(255) NOT NULL,
+            item_description TEXT,
+            item_image LONGBLOB,
+            FOREIGN KEY (user_id) REFERENCES users(id),
+            item_price DECIMAL(10, 2) NOT NULL
         );
         ```
 
