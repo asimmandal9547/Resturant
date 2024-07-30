@@ -1,11 +1,10 @@
-from flask import Flask, render_template, request, redirect, url_for, session, make_response
+from flask import Flask, render_template, request, redirect, url_for, session, make_response, jsonify
 import mysql.connector
 from mysql.connector import Error
 import secrets
 import qrcode
 import io
 import base64
-
 
 app = Flask(__name__)
 app.secret_key = secrets.token_hex(16)
@@ -65,8 +64,9 @@ def dashboard():
 @app.route('/generate_qr')
 def generate_qr():
     if 'username' in session:
+        restaurant_url = url_for('view_menu', restaurant_id=session['user_id'], _external=True)
         if session.get('qr_code') is None:
-            qr = qrcode.make(f"QR Code for {session['restaurant_name']}")
+            qr = qrcode.make(restaurant_url)
             buf = io.BytesIO()
             qr.save(buf, format='PNG')
             buf.seek(0)
@@ -75,6 +75,7 @@ def generate_qr():
         response.headers.set('Content-Type', 'image/png')
         return response
     return redirect(url_for('home'))
+
 
 @app.route('/view_qr')
 def view_qr():
@@ -235,6 +236,116 @@ def remove_menu():
     menu_items = [{'id': item[0], 'name': item[1], 'description': item[2], 'image': base64.b64encode(item[3]).decode('utf-8')} for item in menu_items]
     
     return render_template('remove_menu.html', menu_items=menu_items)
+
+@app.route('/menu/<int:restaurant_id>')
+def view_menu(restaurant_id):
+    connection = create_db_connection()
+    cursor = connection.cursor()
+    cursor.execute("SELECT item_name, item_description, item_price, item_image FROM menu_items WHERE user_id = %s", (restaurant_id,))
+    menu_items = cursor.fetchall()
+    cursor.close()
+    connection.close()
+
+    menu_items = [{'name': item[0], 'description': item[1], 'price': item[2], 'image': base64.b64encode(item[3]).decode('utf-8')} for item in menu_items]
+    return render_template('view_menu.html', menu_items=menu_items)
+
+
+@app.route('/add_to_cart', methods=['POST'])
+def add_to_cart():
+    try:
+        item_id = request.json['item_id']
+        item_name = request.json['item_name']
+        item_price = request.json['item_price']
+        
+        cart = session.get('cart', [])
+        cart.append({'id': item_id, 'name': item_name, 'price': item_price})
+        session['cart'] = cart
+        
+        return jsonify({'success': True})
+    except Exception as e:
+        return jsonify({'error': str(e)}), 400
+
+@app.route('/remove_from_cart', methods=['POST'])
+def remove_from_cart():
+    try:
+        item_id = request.json['item_id']
+        
+        cart = session.get('cart', [])
+        cart = [item for item in cart if item['id'] != item_id]
+        session['cart'] = cart
+        
+        return jsonify({'success': True})
+    except Exception as e:
+        return jsonify({'error': str(e)}), 400
+
+@app.route('/place_order', methods=['POST'])
+def place_order():
+    try:
+        table_number = request.json['table_number']
+        cart = session.get('cart', [])
+        
+        if not cart:
+            return jsonify({'error': 'Cart is empty'}), 400
+        
+        connection = create_db_connection()
+        cursor = connection.cursor()
+        
+        cursor.execute("INSERT INTO orders (table_number, restaurant_id) VALUES (%s, %s)", (table_number, session['user_id']))
+        order_id = cursor.lastrowid
+        
+        for item in cart:
+            cursor.execute("INSERT INTO order_items (order_id, item_id, item_name, item_price) VALUES (%s, %s, %s, %s)",
+                           (order_id, item['id'], item['name'], item['price']))
+        
+        connection.commit()
+        cursor.close()
+        connection.close()
+        
+        session['cart'] = []
+        
+        return jsonify({'success': True})
+    except Exception as e:
+        return jsonify({'error': str(e)}), 400
+
+    
+@app.route('/orders')
+@app.route('/orders')
+def view_orders():
+    if 'username' in session:
+        connection = create_db_connection()
+        cursor = connection.cursor()
+        cursor.execute("""
+            SELECT o.id, o.table_number, GROUP_CONCAT(oi.item_name SEPARATOR ', ') as items, SUM(oi.item_price) as total_price, o.is_completed
+            FROM orders o
+            JOIN order_items oi ON o.id = oi.order_id
+            WHERE o.restaurant_id = %s
+            GROUP BY o.id, o.table_number, o.is_completed
+        """, (session['user_id'],))
+        orders = cursor.fetchall()
+        cursor.close()
+        connection.close()
+
+        return render_template('view_orders.html', orders=orders)
+    return redirect(url_for('home'))
+
+
+@app.route('/mark_order_completed/<int:order_id>', methods=['POST'])
+def mark_order_completed(order_id):
+    if 'username' in session:
+        connection = create_db_connection()
+        cursor = connection.cursor()
+        
+        try:
+            cursor.execute("UPDATE orders SET is_completed = TRUE WHERE id = %s AND restaurant_id = %s", (order_id, session['user_id']))
+            connection.commit()
+            cursor.close()
+            connection.close()
+            return redirect(url_for('view_orders'))
+        except Error as e:
+            print(f"Error while updating MySQL: {e}")
+            return "An error occurred while updating the order status. Please try again.", 500
+    return redirect(url_for('home'))
+
 
 if __name__ == '__main__':
     app.run(debug=True)
