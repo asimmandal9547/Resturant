@@ -11,7 +11,10 @@ This is a Flask-based web application for managing restaurant user registrations
 - Generate and View QR Code for Restaurant
 - Print QR Code
 - Add Menu items
-- Remove Menu items 
+- Remove Menu items
+- Scan QR code 
+- Make Orders
+- View Orders 
 
 ## Requirements
 
@@ -70,6 +73,24 @@ This is a Flask-based web application for managing restaurant user registrations
             FOREIGN KEY (user_id) REFERENCES users(id),
             item_price DECIMAL(10, 2) NOT NULL
         );
+
+        CREATE TABLE orders (
+            id INT AUTO_INCREMENT PRIMARY KEY,
+            table_number VARCHAR(255) NOT NULL,
+            order_date TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+            restaurant_id INT,
+            is_completed BOOLEAN DEFAULT FALSE
+        );
+        
+
+        CREATE TABLE order_items (
+            id INT AUTO_INCREMENT PRIMARY KEY,
+            order_id INT,
+            item_id INT,
+            item_name VARCHAR(255),
+            item_price DECIMAL(10, 2),
+            FOREIGN KEY (order_id) REFERENCES orders(id)
+        );
         ```
 
 5. Update the database connection details in `app.py`:
@@ -93,6 +114,7 @@ This is a Flask-based web application for managing restaurant user registrations
 - **Home Page**: Login to access the dashboard.
 - **Dashboard**: Access various functionalities like viewing/editing profile, adding/removing menu items, viewing orders, and generating QR codes.
 - **Profile Management**: View and update user profile details, including uploading a profile picture.
+- **Menu**: Customers can scan the QR code to view the menu and place orders.
 
 ## Contributing
 
