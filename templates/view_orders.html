@@ -1,55 +1,36 @@
 <!DOCTYPE html>
-<html lang="en">
+<html>
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Orders</title>
-    <style>
-        /* Add some basic styling */
-        body {
-            font-family: Arial, sans-serif;
-            padding: 20px;
-        }
-        .order {
-            border: 1px solid #ccc;
-            margin: 10px 0;
-            padding: 10px;
-            background-color: #f9f9f9;
-        }
-        .completed {
-            background-color: #d4edda;
-        }
-        .button {
-            margin-top: 10px;
-            padding: 5px 10px;
-            background-color: #007bff;
-            color: white;
-            border: none;
-            cursor: pointer;
-        }
-        .button.completed {
-            background-color: #28a745;
-        }
-    </style>
+    <title>View Orders</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/styles.css') }}">
 </head>
 <body>
     <h1>Orders</h1>
-    <div id="orders">
+    <table>
+        <tr>
+            <th>Table Number</th>
+            <th>Items</th>
+            <th>Total Price</th>
+            <th>Status</th>
+            <th>Action</th>
+        </tr>
         {% for order in orders %}
-        <div class="order {{ 'completed' if order[4] else '' }}">
-            <p>Order ID: {{ order[0] }}</p>
-            <p>Table Number: {{ order[1] }}</p>
-            <p>Items: {{ order[2] }}</p>
-            <p>Total Price: ${{ order[3] }}</p>
-            {% if not order[4] %}
-            <form action="{{ url_for('mark_order_completed', order_id=order[0]) }}" method="post">
-                <button type="submit" class="button">Mark as Completed</button>
-            </form>
-            {% else %}
-            <button class="button completed" disabled>Completed</button>
-            {% endif %}
-        </div>
+        <tr>
+            <td>{{ order[1] }}</td>
+            <td>{{ order[2] }}</td>
+            <td>{{ order[3] }}</td>
+            <td>{{ 'Completed' if order[4] else 'Pending' }}</td>
+            <td>
+                {% if not order[4] %}
+                <form method="post" action="{{ url_for('mark_order_completed', order_id=order[0]) }}">
+                    <button type="submit">Mark as Completed</button>
+                </form>
+                {% else %}
+                <button disabled>Completed</button>
+                {% endif %}
+            </td>
+        </tr>
         {% endfor %}
-    </div>
+    </table>
 </body>
 </html>
