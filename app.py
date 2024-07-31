@@ -9,6 +9,46 @@ import base64
 app = Flask(__name__)
 app.secret_key = secrets.token_hex(16)
 
+from flask_mail import Mail, Message
+
+# Initialize Flask-Mail
+app.config['MAIL_SERVER'] = 'smtp.gmail.com'
+app.config['MAIL_PORT'] = 587
+app.config['MAIL_USE_TLS'] = True
+app.config['MAIL_USE_SSL'] = False
+app.config['MAIL_USERNAME'] = 'asimmandal9547@gmail.com'
+app.config['MAIL_PASSWORD'] = 'xtql hyoz vjqg tvar'
+mail = Mail(app)
+
+@app.route('/forgot_password', methods=['GET', 'POST'])
+def forgot_password():
+    if request.method == 'POST':
+        username = request.form['username']
+        email = request.form['email']
+
+        connection = create_db_connection()
+        if connection is None:
+            return "Failed to connect to the database. Please try again later.", 500
+
+        try:
+            cursor = connection.cursor()
+            cursor.execute("SELECT password FROM users WHERE username = %s AND email = %s", (username, email))
+            user = cursor.fetchone()
+            cursor.close()
+            connection.close()
+
+            if user:
+                # Send email with the password
+                msg = Message("Your Password", sender="your-email@example.com", recipients=[email])
+                msg.body = f"Hello {username},\n\nYour password is: {user[0]}"
+                mail.send(msg)
+                return "An email with your password has been sent to your email address.", 200
+            return "Invalid username or email. Please try again."
+        except Error as e:
+            print(f"Error while querying MySQL: {e}")
+            return "An error occurred. Please try again.", 500
+    return render_template('forgot_password.html')
+
 def create_db_connection():
     try:
         connection = mysql.connector.connect(
