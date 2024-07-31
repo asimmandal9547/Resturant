@@ -2,35 +2,97 @@
 <html>
 <head>
     <title>View Orders</title>
-    <link rel="stylesheet" href="{{ url_for('static', filename='css/styles.css') }}">
+    <style>
+        /* General Styles */
+        body {
+            margin: 0;
+            padding: 0;
+            font-family: Arial, sans-serif;
+            background-color: #f8f8f8;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+        }
+
+        /* Container for the orders table */
+        .orders-container {
+            background-color: rgba(255, 255, 255, 0.8);
+            padding: 20px;
+            border-radius: 10px;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+            text-align: center;
+        }
+
+        /* Table Styles */
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 20px;
+        }
+
+        th, td {
+            padding: 10px;
+            border: 1px solid #ddd;
+            text-align: center;
+        }
+
+        th {
+            background-color: #f4f4f4;
+        }
+
+        /* Button Styles */
+        button {
+            padding: 10px 20px;
+            margin-top: 10px;
+            border: none;
+            border-radius: 5px;
+            background-color: #ff7f50;
+            color: #fff;
+            cursor: pointer;
+            transition: background-color 0.3s ease;
+        }
+
+        button:hover {
+            background-color: #ff6347;
+        }
+
+        button:disabled {
+            background-color: #ccc;
+            cursor: not-allowed;
+        }
+
+    </style>
 </head>
 <body>
-    <h1>Orders</h1>
-    <table>
-        <tr>
-            <th>Table Number</th>
-            <th>Items</th>
-            <th>Total Price</th>
-            <th>Status</th>
-            <th>Action</th>
-        </tr>
-        {% for order in orders %}
-        <tr>
-            <td>{{ order[1] }}</td>
-            <td>{{ order[2] }}</td>
-            <td>{{ order[3] }}</td>
-            <td>{{ 'Completed' if order[4] else 'Pending' }}</td>
-            <td>
-                {% if not order[4] %}
-                <form method="post" action="{{ url_for('mark_order_completed', order_id=order[0]) }}">
-                    <button type="submit">Mark as Completed</button>
-                </form>
-                {% else %}
-                <button disabled>Completed</button>
-                {% endif %}
-            </td>
-        </tr>
-        {% endfor %}
-    </table>
+    <div class="orders-container">
+        <h1>Orders</h1>
+        <table>
+            <tr>
+                <th>Table Number</th>
+                <th>Items</th>
+                <th>Total Price</th>
+                <th>Status</th>
+                <th>Action</th>
+            </tr>
+            {% for order in orders %}
+            <tr>
+                <td>{{ order[1] }}</td>
+                <td>{{ order[2] }}</td>
+                <td>{{ order[3] }}</td>
+                <td>{{ 'Completed' if order[4] else 'Pending' }}</td>
+                <td>
+                    {% if not order[4] %}
+                    <form method="post" action="{{ url_for('mark_order_completed', order_id=order[0]) }}">
+                        <button type="submit">Mark as Completed</button>
+                    </form>
+                    {% else %}
+                    <button disabled>Completed</button>
+                    {% endif %}
+                </td>
+            </tr>
+            {% endfor %}
+        </table>
+    </div>
 </body>
 </html>

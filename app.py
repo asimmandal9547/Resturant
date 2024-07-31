@@ -1,15 +1,18 @@
 from flask import Flask, render_template, request, redirect, url_for, session, make_response, jsonify
+from werkzeug.security import generate_password_hash, check_password_hash
+from flask_mail import Mail, Message
 import mysql.connector
 from mysql.connector import Error
 import secrets
 import qrcode
 import io
 import base64
+import hashlib
+import time
 
 app = Flask(__name__)
 app.secret_key = secrets.token_hex(16)
 
-from flask_mail import Mail, Message
 
 # Initialize Flask-Mail
 app.config['MAIL_SERVER'] = 'smtp.gmail.com'
@@ -32,22 +35,67 @@ def forgot_password():
 
         try:
             cursor = connection.cursor()
-            cursor.execute("SELECT password FROM users WHERE username = %s AND email = %s", (username, email))
+            cursor.execute("SELECT id FROM users WHERE username = %s AND email = %s", (username, email))
             user = cursor.fetchone()
             cursor.close()
             connection.close()
 
             if user:
-                # Send email with the password
-                msg = Message("Your Password", sender="your-email@example.com", recipients=[email])
-                msg.body = f"Hello {username},\n\nYour password is: {user[0]}"
+                # Generate a unique token
+                user_id = user[0]
+                token = hashlib.sha256(f"{user_id}{time.time()}".encode()).hexdigest()
+
+                # Save the token to the database with an expiration time
+                connection = create_db_connection()
+                cursor = connection.cursor()
+                cursor.execute("INSERT INTO password_reset_tokens (user_id, token, expiration) VALUES (%s, %s, %s)",
+                               (user_id, token, int(time.time()) + 3600))  # Token valid for 1 hour
+                connection.commit()
+                cursor.close()
+                connection.close()
+
+                # Send email with reset link
+                reset_link = url_for('reset_password', token=token, _external=True)
+                msg = Message("Password Reset Request", sender="your-email@example.com", recipients=[email])
+                msg.body = f"To reset your password, click the following link: {reset_link}\n\nIf you did not request a password reset, please ignore this email."
                 mail.send(msg)
-                return "An email with your password has been sent to your email address.", 200
+                return "A password reset link has been sent to your email address.", 200
             return "Invalid username or email. Please try again."
         except Error as e:
             print(f"Error while querying MySQL: {e}")
             return "An error occurred. Please try again.", 500
     return render_template('forgot_password.html')
+
+@app.route('/reset_password/<token>', methods=['GET', 'POST'])
+def reset_password(token):
+    if request.method == 'POST':
+        new_password = request.form['new_password']
+
+        # Verify token and get user_id
+        connection = create_db_connection()
+        cursor = connection.cursor()
+        cursor.execute("SELECT user_id FROM password_reset_tokens WHERE token = %s AND expiration > %s", (token, int(time.time())))
+        token_info = cursor.fetchone()
+
+        if token_info:
+            user_id = token_info[0]
+            hashed_password = generate_password_hash(new_password)
+
+            # Update password
+            cursor.execute("UPDATE users SET password = %s WHERE id = %s", (hashed_password, user_id))
+            connection.commit()
+            
+            # Remove used token
+            cursor.execute("DELETE FROM password_reset_tokens WHERE token = %s", (token,))
+            connection.commit()
+            cursor.close()
+            connection.close()
+
+            return "Your password has been reset successfully. You can now log in with your new password."
+        return "Invalid or expired token. Please request a new password reset.", 400
+
+    return render_template('reset_password.html', token=token)
+
 
 def create_db_connection():
     try:
@@ -69,6 +117,37 @@ def create_db_connection():
 def home():
     return render_template('index.html')
 
+@app.route('/register', methods=['GET', 'POST'])
+def register():
+    if request.method == 'POST':
+        full_name = request.form['full_name']
+        email = request.form['email']
+        contact_number = request.form['contact_number']
+        username = request.form['username']
+        password = generate_password_hash(request.form['password'])  # Hash the password
+        restaurant_name = request.form['restaurant_name']
+        restaurant_location = request.form['restaurant_location']
+        restaurant_type = request.form['restaurant_type']
+        
+        connection = create_db_connection()
+        if connection is None:
+            return "Failed to connect to the database. Please try again later.", 500
+
+        try:
+            cursor = connection.cursor()
+            cursor.execute("""
+                INSERT INTO users (full_name, email, contact_number, username, password, restaurant_name, restaurant_location, restaurant_type) 
+                VALUES (%s, %s, %s, %s, %s, %s, %s, %s)
+            """, (full_name, email, contact_number, username, password, restaurant_name, restaurant_location, restaurant_type))
+            connection.commit()
+            cursor.close()
+            connection.close()
+            return redirect(url_for('home'))
+        except Error as e:
+            print(f"Error while inserting into MySQL: {e}")
+            return "An error occurred while registering. Please try again.", 500
+    return render_template('register.html')
+
 @app.route('/login', methods=['POST'])
 def login():
     username = request.form['username']
@@ -80,11 +159,11 @@ def login():
 
     try:
         cursor = connection.cursor()
-        cursor.execute("SELECT * FROM users WHERE username = %s AND password = %s", (username, password))
+        cursor.execute("SELECT * FROM users WHERE username = %s", (username,))
         user = cursor.fetchone()
         cursor.close()
         connection.close()
-        if user:
+        if user and check_password_hash(user[2], password):  # Check hashed password
             session['username'] = username
             session['user_id'] = user[0]
             session['restaurant_name'] = user[6]
@@ -115,7 +194,6 @@ def generate_qr():
         response.headers.set('Content-Type', 'image/png')
         return response
     return redirect(url_for('home'))
-
 
 @app.route('/view_qr')
 def view_qr():
@@ -194,37 +272,6 @@ def update_profile():
             return "An error occurred while updating the profile. Please try again.", 500
     return redirect(url_for('home'))
 
-@app.route('/register', methods=['GET', 'POST'])
-def register():
-    if request.method == 'POST':
-        full_name = request.form['full_name']
-        email = request.form['email']
-        contact_number = request.form['contact_number']
-        username = request.form['username']
-        password = request.form['password']
-        restaurant_name = request.form['restaurant_name']
-        restaurant_location = request.form['restaurant_location']
-        restaurant_type = request.form['restaurant_type']
-        
-        connection = create_db_connection()
-        if connection is None:
-            return "Failed to connect to the database. Please try again later.", 500
-
-        try:
-            cursor = connection.cursor()
-            cursor.execute("""
-                INSERT INTO users (full_name, email, contact_number, username, password, restaurant_name, restaurant_location, restaurant_type) 
-                VALUES (%s, %s, %s, %s, %s, %s, %s, %s)
-            """, (full_name, email, contact_number, username, password, restaurant_name, restaurant_location, restaurant_type))
-            connection.commit()
-            cursor.close()
-            connection.close()
-            return redirect(url_for('home'))
-        except Error as e:
-            print(f"Error while inserting into MySQL: {e}")
-            return "An error occurred while registering. Please try again.", 500
-    return render_template('register.html')
-
 @app.route('/add_menu', methods=['GET', 'POST'])
 def add_menu():
     if 'user_id' not in session:
@@ -253,7 +300,6 @@ def add_menu():
     menu_items = [{'id': item[0], 'name': item[1], 'description': item[2], 'price': item[3], 'image': base64.b64encode(item[4]).decode('utf-8')} for item in menu_items]
     
     return render_template('add_menu.html', menu_items=menu_items)
-
 
 @app.route('/remove_menu', methods=['GET', 'POST'])
 def remove_menu():
@@ -288,7 +334,6 @@ def view_menu(restaurant_id):
 
     menu_items = [{'name': item[0], 'description': item[1], 'price': item[2], 'image': base64.b64encode(item[3]).decode('utf-8')} for item in menu_items]
     return render_template('view_menu.html', menu_items=menu_items)
-
 
 @app.route('/add_to_cart', methods=['POST'])
 def add_to_cart():
@@ -347,8 +392,6 @@ def place_order():
     except Exception as e:
         return jsonify({'error': str(e)}), 400
 
-    
-@app.route('/orders')
 @app.route('/orders')
 def view_orders():
     if 'username' in session:
@@ -368,7 +411,6 @@ def view_orders():
         return render_template('view_orders.html', orders=orders)
     return redirect(url_for('home'))
 
-
 @app.route('/mark_order_completed/<int:order_id>', methods=['POST'])
 def mark_order_completed(order_id):
     if 'username' in session:
@@ -385,7 +427,6 @@ def mark_order_completed(order_id):
             print(f"Error while updating MySQL: {e}")
             return "An error occurred while updating the order status. Please try again.", 500
     return redirect(url_for('home'))
-
 
 if __name__ == '__main__':
     app.run(debug=True)

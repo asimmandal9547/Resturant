@@ -6,6 +6,7 @@ This is a Flask-based web application for managing restaurant user registrations
 
 - User Registration
 - User Login
+- Forgot Password
 - View and Edit User Profile
 - Upload Profile Picture
 - Generate and View QR Code for Restaurant
@@ -54,7 +55,7 @@ This is a Flask-based web application for managing restaurant user registrations
         CREATE TABLE users (
             id INT AUTO_INCREMENT PRIMARY KEY,
             username VARCHAR(100) NOT NULL UNIQUE,
-            password VARCHAR(100) NOT NULL,
+            password VARCHAR(255) NOT NULL,
             full_name VARCHAR(100),
             email VARCHAR(100),
             contact_number VARCHAR(20),
@@ -90,6 +91,14 @@ This is a Flask-based web application for managing restaurant user registrations
             item_name VARCHAR(255),
             item_price DECIMAL(10, 2),
             FOREIGN KEY (order_id) REFERENCES orders(id)
+        );
+
+        CREATE TABLE password_reset_tokens (
+            id INT AUTO_INCREMENT PRIMARY KEY,
+            user_id INT,
+            token VARCHAR(255) NOT NULL,
+            expiration INT,
+            FOREIGN KEY (user_id) REFERENCES users(id)
         );
         ```
 
