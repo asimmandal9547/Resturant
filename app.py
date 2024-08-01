@@ -9,6 +9,8 @@ import io
 import base64
 import hashlib
 import time
+import random
+
 
 app = Flask(__name__)
 app.secret_key = secrets.token_hex(16)
@@ -124,29 +126,66 @@ def register():
         email = request.form['email']
         contact_number = request.form['contact_number']
         username = request.form['username']
-        password = generate_password_hash(request.form['password'])  # Hash the password
+        password = request.form['password']
+        hashed_password = generate_password_hash(password)  # Hash the password
         restaurant_name = request.form['restaurant_name']
         restaurant_location = request.form['restaurant_location']
         restaurant_type = request.form['restaurant_type']
         
-        connection = create_db_connection()
-        if connection is None:
-            return "Failed to connect to the database. Please try again later.", 500
+        # Generate OTP
+        otp = random.randint(100000, 999999)
+        session['otp'] = otp
+        session['registration_details'] = {
+            'full_name': full_name,
+            'email': email,
+            'contact_number': contact_number,
+            'username': username,
+            'password': hashed_password,
+            'plain_password': password,
+            'restaurant_name': restaurant_name,
+            'restaurant_location': restaurant_location,
+            'restaurant_type': restaurant_type
+        }
 
-        try:
-            cursor = connection.cursor()
-            cursor.execute("""
-                INSERT INTO users (full_name, email, contact_number, username, password, restaurant_name, restaurant_location, restaurant_type) 
-                VALUES (%s, %s, %s, %s, %s, %s, %s, %s)
-            """, (full_name, email, contact_number, username, password, restaurant_name, restaurant_location, restaurant_type))
-            connection.commit()
-            cursor.close()
-            connection.close()
-            return redirect(url_for('home'))
-        except Error as e:
-            print(f"Error while inserting into MySQL: {e}")
-            return "An error occurred while registering. Please try again.", 500
+        # Send OTP to user's email
+        msg = Message("Your OTP for registration", sender="your-email@gmail.com", recipients=[email])
+        msg.body = f"Hello {username},\n\nYour OTP for registration is: {otp}"
+        mail.send(msg)
+        return redirect(url_for('verify_otp'))
+    
     return render_template('register.html')
+
+@app.route('/verify_otp', methods=['GET', 'POST'])
+def verify_otp():
+    if request.method == 'POST':
+        entered_otp = request.form['otp']
+        if int(entered_otp) == session.get('otp'):
+            details = session.get('registration_details')
+            connection = create_db_connection()
+            if connection is None:
+                return "Failed to connect to the database. Please try again later.", 500
+
+            try:
+                cursor = connection.cursor()
+                cursor.execute("""
+                    INSERT INTO users (full_name, email, contact_number, username, password, restaurant_name, restaurant_location, restaurant_type) 
+                    VALUES (%s, %s, %s, %s, %s, %s, %s, %s)
+                """, (details['full_name'], details['email'], details['contact_number'], details['username'], details['password'], details['restaurant_name'], details['restaurant_location'], details['restaurant_type']))
+                connection.commit()
+                cursor.close()
+                connection.close()
+                # Clear session data
+                session.pop('otp', None)
+                session.pop('registration_details', None)
+                return f"Registration successful! Your username is {details['username']} and your password is {details['plain_password']}."
+            except Error as e:
+                print(f"Error while inserting into MySQL: {e}")
+                return "An error occurred while registering. Please try again.", 500
+        else:
+            return "Invalid OTP. Please try again."
+    
+    return render_template('verify_otp.html')
+
 
 @app.route('/login', methods=['POST'])
 def login():

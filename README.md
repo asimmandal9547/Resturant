@@ -8,7 +8,6 @@ This is a Flask-based web application for managing restaurant user registrations
 - User Login
 - Forgot Password
 - View and Edit User Profile
-- Upload Profile Picture
 - Generate and View QR Code for Restaurant
 - Print QR Code
 - Add Menu items
