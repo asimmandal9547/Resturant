@@ -5,27 +5,94 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Menu</title>
     <style>
-        /* Add some basic styling */
         body {
             font-family: Arial, sans-serif;
+            background-color: #f8f9fa;
             padding: 20px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+        h1, h2 {
+            color: #333;
+        }
+        #menu, .cart, form {
+            width: 100%;
+            max-width: 600px;
+            background: #fff;
+            padding: 20px;
+            border-radius: 10px;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+            margin-bottom: 20px;
         }
         .menu-item {
-            border: 1px solid #ccc;
-            margin: 10px 0;
-            padding: 10px;
             display: flex;
             align-items: center;
+            border-bottom: 1px solid #ccc;
+            padding: 10px 0;
         }
         .menu-item img {
             max-width: 100px;
             margin-right: 20px;
+            border-radius: 10px;
+        }
+        .menu-item h2 {
+            margin: 0;
+            font-size: 1.2em;
+        }
+        .menu-item p {
+            margin: 5px 0;
         }
         .menu-item button {
             margin-left: auto;
+            background-color: #28a745;
+            color: #fff;
+            border: none;
+            padding: 10px 15px;
+            border-radius: 5px;
+            cursor: pointer;
+            transition: background-color 0.3s;
         }
-        .cart {
-            margin-top: 20px;
+        .menu-item button:hover {
+            background-color: #218838;
+        }
+        .cart-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 10px 0;
+        }
+        .cart-item button {
+            background-color: #dc3545;
+            color: #fff;
+            border: none;
+            padding: 5px 10px;
+            border-radius: 5px;
+            cursor: pointer;
+            transition: background-color 0.3s;
+        }
+        .cart-item button:hover {
+            background-color: #c82333;
+        }
+        form label, form input, form button {
+            display: block;
+            width: 100%;
+            margin: 10px 0;
+        }
+        form input, form button {
+            padding: 10px;
+            border-radius: 5px;
+            border: 1px solid #ccc;
+        }
+        form button {
+            background-color: #007bff;
+            color: #fff;
+            border: none;
+            cursor: pointer;
+            transition: background-color 0.3s;
+        }
+        form button:hover {
+            background-color: #0056b3;
         }
     </style>
 </head>
