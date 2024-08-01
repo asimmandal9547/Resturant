@@ -260,7 +260,6 @@ def edit_view():
                     'email': user[4],
                     'contact_number': user[5],
                     'username': user[1],
-                    'password': user[2],
                     'restaurant_name': user[6],
                     'restaurant_location': user[7],
                     'restaurant_type': user[8],
@@ -280,11 +279,11 @@ def update_profile():
         email = request.form['email']
         contact_number = request.form['contact_number']
         username = request.form['username']
-        password = request.form['password']
+        password = generate_password_hash(request.form['password'])  # Hash the new password
         restaurant_name = request.form['restaurant_name']
         restaurant_location = request.form['restaurant_location']
         restaurant_type = request.form['restaurant_type']
-        profile_picture = request.files['profile_picture'].read() if 'profile_picture' in request.files else None
+        profile_picture = request.files['profile_picture'].read() if 'profile_picture' in request.files and request.files['profile_picture'].filename else None
 
         connection = create_db_connection()
         if connection is None:
