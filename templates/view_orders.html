@@ -22,6 +22,7 @@
             border-radius: 10px;
             box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
             text-align: center;
+            width: 80%;
         }
 
         /* Table Styles */
@@ -62,11 +63,18 @@
             cursor: not-allowed;
         }
 
+        /* Section Titles */
+        .section-title {
+            font-size: 1.5em;
+            margin-top: 30px;
+        }
     </style>
 </head>
 <body>
     <div class="orders-container">
         <h1>Orders</h1>
+        
+        <div class="section-title">Pending Orders</div>
         <table>
             <tr>
                 <th>Table Number</th>
@@ -75,21 +83,37 @@
                 <th>Status</th>
                 <th>Action</th>
             </tr>
-            {% for order in orders %}
+            {% for order in pending_orders %}
             <tr>
                 <td>{{ order[1] }}</td>
                 <td>{{ order[2] }}</td>
                 <td>{{ order[3] }}</td>
-                <td>{{ 'Completed' if order[4] else 'Pending' }}</td>
+                <td>{{ 'Pending' }}</td>
                 <td>
-                    {% if not order[4] %}
                     <form method="post" action="{{ url_for('mark_order_completed', order_id=order[0]) }}">
                         <button type="submit">Mark as Completed</button>
                     </form>
-                    {% else %}
-                    <button disabled>Completed</button>
-                    {% endif %}
                 </td>
+            </tr>
+            {% endfor %}
+        </table>
+        
+        <div class="section-title">Completed Orders</div>
+        <table>
+            <tr>
+                <th>Table Number</th>
+                <th>Items</th>
+                <th>Total Price</th>
+                <th>Status</th>
+                <th>Completed At</th>
+            </tr>
+            {% for order in completed_orders %}
+            <tr>
+                <td>{{ order[1] }}</td>
+                <td>{{ order[2] }}</td>
+                <td>{{ order[3] }}</td>
+                <td>{{ 'Completed' }}</td>
+                <td>{{ order[5] }}</td>
             </tr>
             {% endfor %}
         </table>

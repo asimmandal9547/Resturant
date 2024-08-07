@@ -27,11 +27,11 @@ body {
 input[type="text"],
 input[type="password"],
 button {
-    width: 100%;
+    width: 97%;
     padding: 10px;
     margin-bottom: 10px;
     border: none;
-    border-radius: 5px;
+    border-radius: 10px;
     outline: none;
 }
 
@@ -197,4 +197,27 @@ button:hover {
     color: rgb(255, 141, 141);
     text-decoration: underline;
     margin-top: 10px;
+}
+
+.contact-info {
+    text-align: center;
+    margin-top: 650px;
+    margin-bottom: 0px;
+}
+
+.contact-info a {
+    color: #007bff;
+    text-decoration: none;
+    margin: 0 10px;
+}
+
+.contact-info a:hover {
+    text-decoration: underline;
+}
+
+.social-media-icons img {
+    width: 30px;
+    height: 30px;
+    margin: 0 5px;
+    vertical-align: middle;
 }

@@ -17,5 +17,17 @@
         <button id="register-btn" onclick="window.location.href='/register'">Register</button>
         <p id="forgot-password-link" onclick="window.location.href='/forgot_password'" style="cursor:pointer; color:blue; text-decoration:underline; margin-top:10px;">Forgot Password?</p>
     </div>
+
+    <div class="contact-info">
+        <div class="social-media-icons">
+            <a href="https://www.facebook.com/yourpage" target="_blank">
+                <img src="{{ url_for('static', filename='social_media_icons/facebook-icon.png') }}" alt="Facebook">
+            </a>
+            <a href="https://www.linkedin.com/in/yourprofile" target="_blank">
+                <img src="{{ url_for('static', filename='social_media_icons/linkedin-icon.png') }}" alt="LinkedIn">
+            </a>
+        <p>Contact Us: <a href="mailto:contact@yourdomain.com">contact@managemyrestaurant.com</a></p>
+        <p>© 2024 managemyrestaurant. All Rights Reserved</a></p>
+        </div>
 </body>
 </html>
