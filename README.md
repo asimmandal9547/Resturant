@@ -130,4 +130,4 @@ Feel free to contribute to this project by creating issues or submitting pull re
 
 ## License
 
-This project is licensed under the MIT License.
+Copyright in 2024 by ManageMyRestaurant pvt ltd.

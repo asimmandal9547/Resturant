@@ -436,27 +436,31 @@ def view_orders():
         connection = create_db_connection()
         cursor = connection.cursor()
         cursor.execute("""
-            SELECT o.id, o.table_number, GROUP_CONCAT(oi.item_name SEPARATOR ', ') as items, SUM(oi.item_price) as total_price, o.is_completed
+            SELECT o.id, o.table_number, GROUP_CONCAT(oi.item_name SEPARATOR ', ') as items, SUM(oi.item_price) as total_price, o.is_completed, o.completed_at
             FROM orders o
             JOIN order_items oi ON o.id = oi.order_id
             WHERE o.restaurant_id = %s
-            GROUP BY o.id, o.table_number, o.is_completed
+            GROUP BY o.id, o.table_number, o.is_completed, o.completed_at
         """, (session['user_id'],))
         orders = cursor.fetchall()
         cursor.close()
         connection.close()
 
-        return render_template('view_orders.html', orders=orders)
+        pending_orders = [order for order in orders if not order[4]]
+        completed_orders = [order for order in orders if order[4]]
+
+        return render_template('view_orders.html', pending_orders=pending_orders, completed_orders=completed_orders)
     return redirect(url_for('home'))
+
 
 @app.route('/mark_order_completed/<int:order_id>', methods=['POST'])
 def mark_order_completed(order_id):
     if 'username' in session:
         connection = create_db_connection()
         cursor = connection.cursor()
-        
+
         try:
-            cursor.execute("UPDATE orders SET is_completed = TRUE WHERE id = %s AND restaurant_id = %s", (order_id, session['user_id']))
+            cursor.execute("UPDATE orders SET is_completed = TRUE, completed_at = NOW() WHERE id = %s AND restaurant_id = %s", (order_id, session['user_id']))
             connection.commit()
             cursor.close()
             connection.close()
