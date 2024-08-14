@@ -1,6 +1,6 @@
 # Restaurant Management System
 
-This is a Flask-based web application for managing restaurant user registrations, logins, and profile updates, including profile picture uploads.
+This is a Flask-based web application for managing restaurant user registrations, logins, profile updates, Add Orders, Remove Orders, View QR code, View Menu page, Order Managing.
 
 ## Features
 
@@ -18,7 +18,7 @@ This is a Flask-based web application for managing restaurant user registrations
 
 ## Requirements
 
-- Python 3.x
+- Python
 - Flask
 - MySQL
 - XAMPP (for local MySQL server)
@@ -51,6 +51,7 @@ This is a Flask-based web application for managing restaurant user registrations
 
         USE user_auth_db;
 
+        -- Create users table
         CREATE TABLE users (
             id INT AUTO_INCREMENT PRIMARY KEY,
             username VARCHAR(100) NOT NULL UNIQUE,
@@ -64,34 +65,40 @@ This is a Flask-based web application for managing restaurant user registrations
             profile_picture LONGBLOB
         );
 
+        -- Create menu_items table
         CREATE TABLE menu_items (
             id INT AUTO_INCREMENT PRIMARY KEY,
             user_id INT NOT NULL,
             item_name VARCHAR(255) NOT NULL,
             item_description TEXT,
             item_image LONGBLOB,
-            FOREIGN KEY (user_id) REFERENCES users(id),
-            item_price DECIMAL(10, 2) NOT NULL
+            item_price DECIMAL(10, 2) NOT NULL,
+            FOREIGN KEY (user_id) REFERENCES users(id)
         );
 
+        -- Create orders table
         CREATE TABLE orders (
             id INT AUTO_INCREMENT PRIMARY KEY,
             table_number VARCHAR(255) NOT NULL,
             order_date TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
             restaurant_id INT,
-            is_completed BOOLEAN DEFAULT FALSE
+            is_completed BOOLEAN DEFAULT FALSE,
+            completed_at DATETIME,
+            FOREIGN KEY (restaurant_id) REFERENCES users(id)  -- Add foreign key for restaurant_id
         );
-        
 
+        -- Create order_items table with cascading delete
         CREATE TABLE order_items (
             id INT AUTO_INCREMENT PRIMARY KEY,
             order_id INT,
             item_id INT,
             item_name VARCHAR(255),
             item_price DECIMAL(10, 2),
-            FOREIGN KEY (order_id) REFERENCES orders(id)
+            FOREIGN KEY (order_id) REFERENCES orders(id) ON DELETE CASCADE,  -- Add ON DELETE CASCADE
+            FOREIGN KEY (item_id) REFERENCES menu_items(id)  -- Add foreign key for item_id
         );
 
+        -- Create password_reset_tokens table
         CREATE TABLE password_reset_tokens (
             id INT AUTO_INCREMENT PRIMARY KEY,
             user_id INT,
@@ -130,4 +137,4 @@ Feel free to contribute to this project by creating issues or submitting pull re
 
 ## License
 
-Copyright in 2024 by ManageMyRestaurant pvt ltd.
+Copyright in 2024 by ManageMyRestaurant.

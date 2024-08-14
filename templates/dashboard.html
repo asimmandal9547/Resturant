@@ -4,7 +4,76 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Dashboard</title>
+    <link rel="icon" href="{{ url_for('static', filename='Images/favicon_user.ico') }}" type="image/x-icon">
     <link rel="stylesheet" href="{{ url_for('static', filename='styles.css') }}">
+    <style>
+        /* Add the responsive styles here */
+        body {
+            font-family: Arial, sans-serif;
+            margin: 0;
+            padding: 0;
+            background-color: #f8f9fa;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+        }
+
+        .card-container {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+            gap: 20px;
+            padding: 20px;
+            width: 100%;
+            max-width: 1200px;
+            box-sizing: border-box;
+        }
+
+        .card {
+            background-color: #fffffff6;
+            border-radius: 10px;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+            text-align: center;
+            padding: 20px;
+            cursor: pointer;
+            transition: transform 0.3s ease;
+        }
+
+        .card:hover {
+            transform: scale(1.05);
+        }
+
+        .card-image {
+            max-width: 100px;
+            margin-bottom: 10px;
+        }
+
+        .card p {
+            font-size: 1.1em;
+            margin: 0;
+            color: #333;
+        }
+
+        @media (max-width: 600px) {
+            .card-container {
+                grid-template-columns: 1fr 1fr;
+            }
+
+            .card p {
+                font-size: 1em;
+            }
+        }
+
+        @media (max-width: 400px) {
+            .card-container {
+                grid-template-columns: 1fr;
+            }
+
+            .card p {
+                font-size: 0.9em;
+            }
+        }
+    </style>
     <script>
         function viewRegistrationData() {
             window.open("/edit_view", "_blank");
@@ -20,7 +89,6 @@
 
         function viewOrders() {
             window.open("/orders", "_blank");
-        
         }
 
         function viewQRCode() {
@@ -50,9 +118,6 @@
             <img src="{{ url_for('static', filename='Images/Logos/qr.png') }}" alt="View QR Code" class="card-image">
             <p>View QR Code</p>
         </div>
-    </div>
-    <div id="registration-data" class="hidden">
-        <!-- Display registration form data here -->
     </div>
 </body>
 </html>
