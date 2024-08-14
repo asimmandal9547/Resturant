@@ -3,6 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="icon" href="{{ url_for('static', filename='Images/favicon_user.ico') }}" type="image/x-icon">
     <title>Add Menu</title>
     <style>
         body {
@@ -102,7 +103,7 @@
                     <div>
                         <h3>{{ item.name }}</h3>
                         <p>{{ item.description }}</p>
-                        <p>Price: ${{ item.price }}</p>
+                        <p>Price: ₹{{ item.price }}</p>
                     </div>
                 </div>
             {% endfor %}

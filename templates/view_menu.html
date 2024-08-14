@@ -4,6 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Menu</title>
+    <link rel="icon" href="{{ url_for('static', filename='Images/favicon.ico') }}" type="image/x-icon">
     <style>
         body {
             font-family: Arial, sans-serif;
@@ -74,6 +75,10 @@
         .cart-item button:hover {
             background-color: #c82333;
         }
+        .cart-total {
+            font-weight: bold;
+            margin-top: 10px;
+        }
         form label, form input, form button {
             display: block;
             width: 100%;
@@ -94,6 +99,69 @@
         form button:hover {
             background-color: #0056b3;
         }
+
+        /* Success message styles */
+        .success-message {
+            display: none;
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            background-color: #28a745;
+            color: #fff;
+            padding: 20px;
+            border-radius: 10px;
+            text-align: center;
+            font-size: 1.5em;
+            z-index: 1000;
+            opacity: 0;
+            animation: fadeInOut 4s ease-in-out forwards;
+        }
+
+        .success-message span {
+            display: block;
+            margin-top: 10px;
+            font-size: 1.2em;
+        }
+
+        /* Flower spreading animation */
+        .flower {
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            width: 50px;
+            height: 50px;
+            background-image: url('https://i.imgur.com/4AiXzf8.png'); /* URL to a flower image */
+            background-size: cover;
+            opacity: 0;
+            z-index: 999;
+        }
+
+        @keyframes fadeInOut {
+            0% {
+                opacity: 0;
+            }
+            20% {
+                opacity: 1;
+            }
+            80% {
+                opacity: 1;
+            }
+            100% {
+                opacity: 0;
+            }
+        }
+
+        @keyframes spreadFlowers {
+            0% {
+                transform: translate(-50%, -50%) scale(0);
+                opacity: 1;
+            }
+            100% {
+                transform: translate(-50%, -50%) scale(4);
+                opacity: 0;
+            }
+        }
     </style>
 </head>
 <body>
@@ -105,7 +173,7 @@
             <div>
                 <h2>{{ item.name }}</h2>
                 <p>{{ item.description }}</p>
-                <p>Price: ${{ item.price }}</p>
+                <p>Price: ₹{{ item.price }}</p>
             </div>
             <button onclick="addToCart('{{ item.id }}', '{{ item.name }}', '{{ item.price }}')">Add to Cart</button>
         </div>
@@ -115,12 +183,19 @@
     <div class="cart" id="cart">
         <p>Cart is empty</p>
     </div>
+    <div class="cart-total" id="cart-total">Total: ₹0.00</div>
     <h2>Place Order</h2>
     <form id="order-form">
         <label for="table_number">Table Number:</label>
         <input type="text" id="table_number" name="table_number" required>
         <button type="submit">Place Order</button>
     </form>
+
+    <div class="success-message" id="success-message">
+        🌸 Order Placed Successfully! 🌸
+        <span>🎉 Enjoy your meal! 🍽️</span>
+    </div>
+
     <script>
         let cart = [];
 
@@ -143,7 +218,7 @@
             })
             .then(data => {
                 if (data.success) {
-                    cart.push({ id, name, price });
+                    cart.push({ id, name, price: parseFloat(price) });
                     renderCart();
                 }
             })
@@ -187,19 +262,26 @@
 
         function renderCart() {
             const cartElement = document.getElementById('cart');
+            const totalElement = document.getElementById('cart-total');
             cartElement.innerHTML = '';
+            let totalPrice = 0;
+
             cart.forEach(item => {
                 const cartItem = document.createElement('div');
                 cartItem.className = 'cart-item';
                 cartItem.innerHTML = `
-                    <p>${item.name} - $${item.price}</p>
+                    <p>${item.name} - ₹${item.price.toFixed(2)}</p>
                     <button onclick="removeFromCart('${item.id}')">Remove</button>
                 `;
                 cartElement.appendChild(cartItem);
+                totalPrice += item.price;
             });
+
             if (cart.length === 0) {
                 cartElement.innerHTML = '<p>Cart is empty</p>';
             }
+
+            totalElement.textContent = `Total: ₹${totalPrice.toFixed(2)}`;
         }
 
         document.getElementById('order-form').addEventListener('submit', function(event) {
@@ -225,7 +307,7 @@
                 if (data.success) {
                     cart.length = 0;
                     renderCart();
-                    alert('Order placed successfully');
+                    showSuccessMessage();
                 }
             })
             .catch(error => {
@@ -233,6 +315,31 @@
                 alert('Failed to place order. Please try again.');
             });
         });
+
+        function showSuccessMessage() {
+            const message = document.getElementById('success-message');
+            message.style.display = 'block';
+
+            for (let i = 0; i < 10; i++) {
+                const flower = document.createElement('div');
+                flower.className = 'flower';
+                document.body.appendChild(flower);
+
+                const size = Math.random() * 40 + 20;
+                const x = Math.random() * window.innerWidth - size / 2;
+                const y = Math.random() * window.innerHeight - size / 2;
+
+                flower.style.width = `${size}px`;
+                flower.style.height = `${size}px`;
+                flower.style.left = `${x}px`;
+                flower.style.top = `${y}px`;
+                flower.style.animation = `spreadFlowers ${Math.random() * 2 + 2}s ease-in-out`;
+
+                setTimeout(() => {
+                    flower.remove();
+                }, 3000);
+            }
+        }
     </script>
 </body>
 </html>

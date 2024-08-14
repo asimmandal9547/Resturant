@@ -1,4 +1,4 @@
-from flask import Flask, render_template, request, redirect, url_for, session, make_response, jsonify
+from flask import Flask, render_template, request, redirect, url_for, session, make_response, jsonify, Response, send_file
 from werkzeug.security import generate_password_hash, check_password_hash
 from flask_mail import Mail, Message
 import mysql.connector
@@ -10,6 +10,7 @@ import base64
 import hashlib
 import time
 import random
+import csv
 
 
 app = Flask(__name__)
@@ -64,7 +65,7 @@ def forgot_password():
                 return "A password reset link has been sent to your email address.", 200
             return "Invalid username or email. Please try again."
         except Error as e:
-            print(f"Error while querying MySQL: {e}")
+            print(f"Error while querying database: {e}")
             return "An error occurred. Please try again.", 500
     return render_template('forgot_password.html')
 
@@ -109,10 +110,10 @@ def create_db_connection():
             port=3306
         )
         if connection.is_connected():
-            print("Connection to MySQL database was successful")
+            print("Connection to database was successful")
             return connection
     except Error as e:
-        print(f"Error while connecting to MySQL: {e}")
+        print(f"Error while connecting to database: {e}")
     return None
 
 @app.route('/')
@@ -148,7 +149,7 @@ def register():
         }
 
         # Send OTP to user's email
-        msg = Message("Your OTP for registration", sender="your-email@gmail.com", recipients=[email])
+        msg = Message("Your OTP for ManageMyRestaurant registration", sender="your-email@gmail.com", recipients=[email])
         msg.body = f"Hello {username},\n\nYour OTP for registration is: {otp}"
         mail.send(msg)
         return redirect(url_for('verify_otp'))
@@ -179,7 +180,7 @@ def verify_otp():
                 session.pop('registration_details', None)
                 return f"Registration successful! Your username is {details['username']} and your password is {details['plain_password']}."
             except Error as e:
-                print(f"Error while inserting into MySQL: {e}")
+                print(f"Error while inserting into database: {e}")
                 return "An error occurred while registering. Please try again.", 500
         else:
             return "Invalid OTP. Please try again."
@@ -210,7 +211,7 @@ def login():
             return redirect(url_for('dashboard'))
         return "Invalid credentials, please try again."
     except Error as e:
-        print(f"Error while querying MySQL: {e}")
+        print(f"Error while querying database: {e}")
         return "An error occurred while logging in. Please try again.", 500
 
 @app.route('/dashboard')
@@ -267,7 +268,7 @@ def edit_view():
                 }
                 return render_template('edit_view.html', user=user_data)
         except Error as e:
-            print(f"Error while querying MySQL: {e}")
+            print(f"Error while querying database: {e}")
             return "An error occurred. Please try again.", 500
     return redirect(url_for('home'))
 
@@ -306,7 +307,7 @@ def update_profile():
             connection.close()
             return redirect(url_for('dashboard'))
         except Error as e:
-            print(f"Error while updating MySQL: {e}")
+            print(f"Error while updating database: {e}")
             return "An error occurred while updating the profile. Please try again.", 500
     return redirect(url_for('home'))
 
@@ -430,6 +431,7 @@ def place_order():
     except Exception as e:
         return jsonify({'error': str(e)}), 400
 
+
 @app.route('/orders')
 def view_orders():
     if 'username' in session:
@@ -466,8 +468,61 @@ def mark_order_completed(order_id):
             connection.close()
             return redirect(url_for('view_orders'))
         except Error as e:
-            print(f"Error while updating MySQL: {e}")
+            print(f"Error while updating database: {e}")
             return "An error occurred while updating the order status. Please try again.", 500
+    return redirect(url_for('home'))
+
+@app.route('/download_order_history', methods=['POST'])
+def download_order_history():
+    if 'username' in session:
+        connection = create_db_connection()
+        cursor = connection.cursor()
+        cursor.execute("""
+            SELECT o.id, o.table_number, GROUP_CONCAT(oi.item_name SEPARATOR ', ') as items, SUM(oi.item_price) as total_price, o.is_completed, o.completed_at
+            FROM orders o
+            JOIN order_items oi ON o.id = oi.order_id
+            WHERE o.restaurant_id = %s
+            GROUP BY o.id, o.table_number, o.is_completed, o.completed_at
+        """, (session['user_id'],))
+        orders = cursor.fetchall()
+        cursor.close()
+        connection.close()
+
+        output = io.StringIO()
+        writer = csv.writer(output)
+        writer.writerow(['Order ID', 'Table Number', 'Items', 'Total Price', 'Status', 'Completed At'])
+        for order in orders:
+            writer.writerow([
+                order[0],
+                order[1],
+                order[2],
+                order[3],
+                'Completed' if order[4] else 'Pending',
+                order[5] if order[4] else ''
+            ])
+        
+        output.seek(0)
+        return Response(
+            output,
+            mimetype="text/csv",
+            headers={"Content-Disposition": "attachment;filename=order_history.csv"}
+        )
+    return redirect(url_for('home'))
+
+@app.route('/clear_orders', methods=['POST'])
+def clear_orders():
+    if 'username' in session:
+        connection = create_db_connection()
+        cursor = connection.cursor()
+        try:
+            cursor.execute("DELETE FROM orders WHERE restaurant_id = %s", (session['user_id'],))
+            connection.commit()
+            cursor.close()
+            connection.close()
+            return redirect(url_for('view_orders'))
+        except mysql.connector.Error as err:
+            print(f"Error: {err}")
+            return "An error occurred while clearing orders. Please try again.", 500
     return redirect(url_for('home'))
 
 if __name__ == '__main__':

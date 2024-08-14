@@ -2,6 +2,7 @@
 <html>
 <head>
     <title>View Orders</title>
+    <link rel="icon" href="{{ url_for('static', filename='Images/favicon_user.ico') }}" type="image/x-icon">
     <style>
         /* General Styles */
         body {
@@ -68,12 +69,26 @@
             font-size: 1.5em;
             margin-top: 30px;
         }
+
+        /* Button Container */
+        .button-container {
+            margin: 20px 0;
+        }
     </style>
 </head>
 <body>
     <div class="orders-container">
         <h1>Orders</h1>
-        
+
+        <div class="button-container">
+            <form method="post" action="{{ url_for('download_order_history') }}">
+                <button type="submit">Download Order History</button>
+            </form>
+            <form method="post" action="{{ url_for('clear_orders') }}">
+                <button type="submit" style="background-color: #ff4500;" onclick="return confirm('Are you sure you want to clear all orders?');">Clear Orders</button>
+            </form>
+        </div>
+
         <div class="section-title">Pending Orders</div>
         <table>
             <tr>
