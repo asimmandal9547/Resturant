@@ -124,19 +124,6 @@
             font-size: 1.2em;
         }
 
-        /* Flower spreading animation */
-        .flower {
-            position: fixed;
-            top: 50%;
-            left: 50%;
-            width: 50px;
-            height: 50px;
-            background-image: url('https://i.imgur.com/4AiXzf8.png'); /* URL to a flower image */
-            background-size: cover;
-            opacity: 0;
-            z-index: 999;
-        }
-
         @keyframes fadeInOut {
             0% {
                 opacity: 0;
@@ -148,17 +135,6 @@
                 opacity: 1;
             }
             100% {
-                opacity: 0;
-            }
-        }
-
-        @keyframes spreadFlowers {
-            0% {
-                transform: translate(-50%, -50%) scale(0);
-                opacity: 1;
-            }
-            100% {
-                transform: translate(-50%, -50%) scale(4);
                 opacity: 0;
             }
         }
@@ -319,26 +295,6 @@
         function showSuccessMessage() {
             const message = document.getElementById('success-message');
             message.style.display = 'block';
-
-            for (let i = 0; i < 10; i++) {
-                const flower = document.createElement('div');
-                flower.className = 'flower';
-                document.body.appendChild(flower);
-
-                const size = Math.random() * 40 + 20;
-                const x = Math.random() * window.innerWidth - size / 2;
-                const y = Math.random() * window.innerHeight - size / 2;
-
-                flower.style.width = `${size}px`;
-                flower.style.height = `${size}px`;
-                flower.style.left = `${x}px`;
-                flower.style.top = `${y}px`;
-                flower.style.animation = `spreadFlowers ${Math.random() * 2 + 2}s ease-in-out`;
-
-                setTimeout(() => {
-                    flower.remove();
-                }, 3000);
-            }
         }
     </script>
 </body>
