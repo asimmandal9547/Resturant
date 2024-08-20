@@ -22,8 +22,8 @@ app.config['MAIL_SERVER'] = 'smtp.gmail.com'
 app.config['MAIL_PORT'] = 587
 app.config['MAIL_USE_TLS'] = True
 app.config['MAIL_USE_SSL'] = False
-app.config['MAIL_USERNAME'] = 'asimmandal9547@gmail.com'
-app.config['MAIL_PASSWORD'] = 'xtql hyoz vjqg tvar'
+app.config['MAIL_USERNAME'] = 'managemyrestraw@gmail.com'
+app.config['MAIL_PASSWORD'] = 'ggag orpo xdda vmfa'
 mail = Mail(app)
 
 @app.route('/forgot_password', methods=['GET', 'POST'])
@@ -437,22 +437,36 @@ def view_orders():
     if 'username' in session:
         connection = create_db_connection()
         cursor = connection.cursor()
+        
+        # Fetch pending orders
         cursor.execute("""
             SELECT o.id, o.table_number, GROUP_CONCAT(oi.item_name SEPARATOR ', ') as items, SUM(oi.item_price) as total_price, o.is_completed, o.completed_at
             FROM orders o
             JOIN order_items oi ON o.id = oi.order_id
-            WHERE o.restaurant_id = %s
+            WHERE o.restaurant_id = %s AND o.is_completed = FALSE
             GROUP BY o.id, o.table_number, o.is_completed, o.completed_at
         """, (session['user_id'],))
-        orders = cursor.fetchall()
+        pending_orders = cursor.fetchall()
+        
+        # Fetch recently completed orders
+        cursor.execute("""
+            SELECT o.id, o.table_number, GROUP_CONCAT(oi.item_name SEPARATOR ', ') as items, SUM(oi.item_price) as total_price, o.is_completed, o.completed_at
+            FROM orders o
+            JOIN order_items oi ON o.id = oi.order_id
+            WHERE o.restaurant_id = %s AND o.is_completed = TRUE
+            GROUP BY o.id, o.table_number, o.is_completed, o.completed_at
+            ORDER BY o.completed_at DESC
+            LIMIT 5
+        """, (session['user_id'],))
+        recent_completed_orders = cursor.fetchall()
+        
         cursor.close()
         connection.close()
-
-        pending_orders = [order for order in orders if not order[4]]
-        completed_orders = [order for order in orders if order[4]]
-
-        return render_template('view_orders.html', pending_orders=pending_orders, completed_orders=completed_orders)
+        
+        return render_template('view_orders.html', pending_orders=pending_orders, recent_completed_orders=recent_completed_orders)
+    
     return redirect(url_for('home'))
+
 
 
 @app.route('/mark_order_completed/<int:order_id>', methods=['POST'])
@@ -462,7 +476,10 @@ def mark_order_completed(order_id):
         cursor = connection.cursor()
 
         try:
-            cursor.execute("UPDATE orders SET is_completed = TRUE, completed_at = NOW() WHERE id = %s AND restaurant_id = %s", (order_id, session['user_id']))
+            cursor.execute(
+                "UPDATE orders SET is_completed = TRUE, completed_at = NOW() WHERE id = %s AND restaurant_id = %s",
+                (order_id, session['user_id'])
+            )
             connection.commit()
             cursor.close()
             connection.close()
@@ -472,25 +489,32 @@ def mark_order_completed(order_id):
             return "An error occurred while updating the order status. Please try again.", 500
     return redirect(url_for('home'))
 
+
 @app.route('/download_order_history', methods=['POST'])
 def download_order_history():
     if 'username' in session:
+        selected_date = request.form.get('history-date')
         connection = create_db_connection()
         cursor = connection.cursor()
+
+        # Fetch orders only for the selected date
         cursor.execute("""
             SELECT o.id, o.table_number, GROUP_CONCAT(oi.item_name SEPARATOR ', ') as items, SUM(oi.item_price) as total_price, o.is_completed, o.completed_at
             FROM orders o
             JOIN order_items oi ON o.id = oi.order_id
-            WHERE o.restaurant_id = %s
+            WHERE o.restaurant_id = %s AND DATE(o.completed_at) = %s
             GROUP BY o.id, o.table_number, o.is_completed, o.completed_at
-        """, (session['user_id'],))
+        """, (session['user_id'], selected_date))
+        
         orders = cursor.fetchall()
         cursor.close()
         connection.close()
 
+        # Create CSV for download
         output = io.StringIO()
         writer = csv.writer(output)
         writer.writerow(['Order ID', 'Table Number', 'Items', 'Total Price', 'Status', 'Completed At'])
+        
         for order in orders:
             writer.writerow([
                 order[0],
@@ -505,24 +529,17 @@ def download_order_history():
         return Response(
             output,
             mimetype="text/csv",
-            headers={"Content-Disposition": "attachment;filename=order_history.csv"}
+            headers={"Content-Disposition": f"attachment;filename=order_history_{selected_date}.csv"}
         )
     return redirect(url_for('home'))
+
 
 @app.route('/clear_orders', methods=['POST'])
 def clear_orders():
     if 'username' in session:
-        connection = create_db_connection()
-        cursor = connection.cursor()
-        try:
-            cursor.execute("DELETE FROM orders WHERE restaurant_id = %s", (session['user_id'],))
-            connection.commit()
-            cursor.close()
-            connection.close()
-            return redirect(url_for('view_orders'))
-        except mysql.connector.Error as err:
-            print(f"Error: {err}")
-            return "An error occurred while clearing orders. Please try again.", 500
+        # This function will not delete orders from the database, just clear them from the session
+        session.pop('orders', None)  # Clearing the orders from session if stored there
+        return redirect(url_for('view_orders'))
     return redirect(url_for('home'))
 
 if __name__ == '__main__':
