@@ -2,7 +2,6 @@
 <html>
 <head>
     <title>View Orders</title>
-    <link rel="icon" href="{{ url_for('static', filename='Images/favicon_user.ico') }}" type="image/x-icon">
     <style>
         /* General Styles */
         body {
@@ -23,7 +22,6 @@
             border-radius: 10px;
             box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
             text-align: center;
-            width: 80%;
         }
 
         /* Table Styles */
@@ -64,32 +62,21 @@
             cursor: not-allowed;
         }
 
-        /* Section Titles */
-        .section-title {
-            font-size: 1.5em;
-            margin-top: 30px;
+        /* Action Buttons Container */
+        .action-buttons {
+            display: flex;
+            justify-content: space-between;
+            margin-top: 20px;
         }
 
-        /* Button Container */
-        .button-container {
-            margin: 20px 0;
-        }
     </style>
 </head>
 <body>
     <div class="orders-container">
         <h1>Orders</h1>
 
-        <div class="button-container">
-            <form method="post" action="{{ url_for('download_order_history') }}">
-                <button type="submit">Download Order History</button>
-            </form>
-            <form method="post" action="{{ url_for('clear_orders') }}">
-                <button type="submit" style="background-color: #ff4500;" onclick="return confirm('Are you sure you want to clear all orders?');">Clear Orders</button>
-            </form>
-        </div>
-
-        <div class="section-title">Pending Orders</div>
+        <!-- Pending Orders Table -->
+        <h2>Pending Orders</h2>
         <table>
             <tr>
                 <th>Table Number</th>
@@ -103,7 +90,7 @@
                 <td>{{ order[1] }}</td>
                 <td>{{ order[2] }}</td>
                 <td>{{ order[3] }}</td>
-                <td>{{ 'Pending' }}</td>
+                <td>Pending</td>
                 <td>
                     <form method="post" action="{{ url_for('mark_order_completed', order_id=order[0]) }}">
                         <button type="submit">Mark as Completed</button>
@@ -112,26 +99,35 @@
             </tr>
             {% endfor %}
         </table>
-        
-        <div class="section-title">Completed Orders</div>
+
+        <!-- Recently Completed Orders Table -->
+        <h2>Recently Completed Orders</h2>
         <table>
             <tr>
                 <th>Table Number</th>
                 <th>Items</th>
                 <th>Total Price</th>
-                <th>Status</th>
                 <th>Completed At</th>
             </tr>
-            {% for order in completed_orders %}
+            {% for order in recent_completed_orders %}
             <tr>
                 <td>{{ order[1] }}</td>
                 <td>{{ order[2] }}</td>
                 <td>{{ order[3] }}</td>
-                <td>{{ 'Completed' }}</td>
                 <td>{{ order[5] }}</td>
             </tr>
             {% endfor %}
         </table>
+
+        <!-- Action Buttons for Download -->
+        <div class="action-buttons">
+            <!-- Download Order History Form (with date input) -->
+            <form method="post" action="{{ url_for('download_order_history') }}">
+                <label for="history-date">Select Date:</label>
+                <input type="date" name="history-date" required>
+                <button type="submit">Download Order History</button>
+            </form>
+        </div>
     </div>
 </body>
 </html>
