@@ -138,13 +138,56 @@
                 opacity: 0;
             }
         }
+
+        .filter-container {
+            width: 100%;
+            max-width: 600px;
+            background: #fff;
+            padding: 20px;
+            border-radius: 10px;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+            margin-bottom: 20px;
+        }
+        .filter-container label, .filter-container select {
+            display: block;
+            width: 100%;
+            margin: 10px 0;
+        }
+        .filter-container select {
+            padding: 10px;
+            border-radius: 5px;
+            border: 1px solid #ccc;
+        }
     </style>
 </head>
 <body>
     <h1>Menu</h1>
+
+    <!-- Filter Section -->
+    <div class="filter-container">
+        <label for="section-filter">Filter by Section:</label>
+        <select id="section-filter" onchange="filterMenu()">
+            <option value="all">All</option>
+            {% for section in sections %}
+            <option value="{{ section }}">{{ section }}</option>
+            {% endfor %}
+        </select>
+        
+
+        <label for="price-filter">Filter by Price Range:</label>
+        <select id="price-filter" onchange="filterMenu()">
+            <option value="all">All</option>
+            <option value="0-50">₹0 - ₹50</option>
+            <option value="51-100">₹51 - ₹100</option>
+            <option value="101-200">₹101 - ₹200</option>
+            <option value="201-500">₹201 - ₹500</option>
+            <!-- Add more options as needed -->
+        </select>
+    </div>
+
     <div id="menu">
         {% for item in menu_items %}
-        <div class="menu-item">
+        <div class="menu-item" data-section="{{ item.section }}" data-price="{{ item.price }}">
             <img src="data:image/png;base64,{{ item.image }}" alt="{{ item.name }}">
             <div>
                 <h2>{{ item.name }}</h2>
@@ -155,6 +198,7 @@
         </div>
         {% endfor %}
     </div>
+
     <h2>Cart</h2>
     <div class="cart" id="cart">
         <p>Cart is empty</p>
@@ -174,6 +218,35 @@
 
     <script>
         let cart = [];
+
+        function filterMenu() {
+            const selectedSection = document.getElementById('section-filter').value;
+            const selectedPriceRange = document.getElementById('price-filter').value;
+            const menuItems = document.querySelectorAll('.menu-item');
+            
+            menuItems.forEach(item => {
+                const itemSection = item.getAttribute('data-section');
+                const itemPrice = parseFloat(item.getAttribute('data-price'));
+
+                // Filter by section
+                const sectionMatch = (selectedSection === 'all' || itemSection === selectedSection);
+                
+                // Filter by price range
+                let priceMatch = false;
+                if (selectedPriceRange === 'all') {
+                    priceMatch = true;
+                } else {
+                    const [minPrice, maxPrice] = selectedPriceRange.split('-').map(Number);
+                    priceMatch = (itemPrice >= minPrice && itemPrice <= maxPrice);
+                }
+                
+                if (sectionMatch && priceMatch) {
+                    item.style.display = 'flex';
+                } else {
+                    item.style.display = 'none';
+                }
+            });
+        }
 
         function addToCart(id, name, price) {
             fetch('/add_to_cart', {

@@ -1,4 +1,4 @@
-from flask import Flask, render_template, request, redirect, url_for, session, make_response, jsonify, Response, send_file
+from flask import Flask, render_template, request, redirect, url_for, session, make_response, jsonify, Response, flash
 from werkzeug.security import generate_password_hash, check_password_hash
 from flask_mail import Mail, Message
 import mysql.connector
@@ -60,7 +60,17 @@ def forgot_password():
                 # Send email with reset link
                 reset_link = url_for('reset_password', token=token, _external=True)
                 msg = Message("Password Reset Request", sender="your-email@example.com", recipients=[email])
-                msg.body = f"To reset your password, click the following link: {reset_link}\n\nIf you did not request a password reset, please ignore this email."
+                msg.body = f""" 
+                Hello {username},
+                
+                To reset your password, click the following link: {reset_link}
+                If you did not request a password reset, please ignore this email.
+                
+                Best regards,
+                ManageMyRestaurant
+                
+                Note: This is an automated email. Please do not reply to this email.
+                """
                 mail.send(msg)
                 return "A password reset link has been sent to your email address.", 200
             return "Invalid username or email. Please try again."
@@ -150,7 +160,24 @@ def register():
 
         # Send OTP to user's email
         msg = Message("Your OTP for ManageMyRestaurant registration", sender="your-email@gmail.com", recipients=[email])
-        msg.body = f"Hello {username},\n\nYour OTP for registration is: {otp}"
+        msg.body = f"""
+        Hello {username},
+
+        A warm welcome to ManageMyRestaurant! We're excited to have you on board!
+
+        To complete your registration and ensure the security of your account, we've sent you a One-Time Password (OTP) to verify your email address.
+
+        Your OTP is: {otp}
+
+        Please enter this code on our verification page to verify your email and activate your account. This will enable you to access all the features and benefits of ManageMyRestaurant.
+
+        Thank you for choosing ManageMyRestaurant! We look forward to helping you manage your restaurant efficiently and grow your business.
+
+        Best regards,
+        ManageMyRestaurant
+
+        Note: This is an automated email. Please do not reply to this email.
+        """
         mail.send(msg)
         return redirect(url_for('verify_otp'))
     
@@ -311,34 +338,149 @@ def update_profile():
             return "An error occurred while updating the profile. Please try again.", 500
     return redirect(url_for('home'))
 
+
 @app.route('/add_menu', methods=['GET', 'POST'])
 def add_menu():
     if 'user_id' not in session:
         return redirect(url_for('login'))
-    
+
     connection = create_db_connection()
     cursor = connection.cursor()
-    
+
     if request.method == 'POST':
-        item_name = request.form['item_name']
-        item_description = request.form['item_description']
-        item_price = request.form['item_price']
-        item_image = request.files['item_image'].read()
-        
-        cursor.execute(
-            "INSERT INTO menu_items (item_name, item_description, item_price, item_image, user_id) VALUES (%s, %s, %s, %s, %s)",
-            (item_name, item_description, item_price, item_image, session['user_id'])
-        )
-        connection.commit()
-    
-    cursor.execute("SELECT id, item_name, item_description, item_price, item_image FROM menu_items WHERE user_id = %s", (session['user_id'],))
+        if 'item_name' in request.form:
+            item_name = request.form['item_name']
+            item_description = request.form['item_description']
+            item_price = request.form['item_price']
+            item_section = request.form.get('item_section', '')  # Defaults to an empty string if not provided
+
+            # Image validation (Optional but recommended)
+            if 'item_image' in request.files:
+                item_image = request.files['item_image']
+                if item_image.mimetype not in ['image/jpeg', 'image/png', 'image/gif']:
+                    flash("Invalid image format. Please upload a JPG, PNG, or GIF image.", "error")
+                    return redirect(url_for('add_menu'))
+
+                # Read image content
+                item_image_data = item_image.read()
+            else:
+                item_image_data = None
+
+            # Insert menu item
+            cursor.execute(
+                """
+                INSERT INTO menu_items 
+                (item_name, item_description, item_price, item_image, item_section, user_id)
+                VALUES (%s, %s, %s, %s, %s, %s)
+                """, 
+                (item_name, item_description, item_price, item_image_data, item_section, session['user_id'])
+            )
+            connection.commit()
+
+        elif 'section_name' in request.form:
+            section_name = request.form['section_name']
+
+            # Check for duplicate section
+            cursor.execute(
+                "SELECT COUNT(*) FROM item_section WHERE section_name = %s AND user_id = %s",
+                (section_name, session['user_id'])
+            )
+            if cursor.fetchone()[0] > 0:
+                flash("Section already exists.", "error")
+            else:
+                # Insert new section
+                cursor.execute(
+                    "INSERT INTO item_section (section_name, user_id) VALUES (%s, %s)",
+                    (section_name, session['user_id'])
+                )
+                connection.commit()
+
+    # Fetch menu items
+    cursor.execute(
+        """
+        SELECT id, item_name, item_description, item_price, item_image, item_section 
+        FROM menu_items 
+        WHERE user_id = %s
+        """, 
+        (session['user_id'],)
+    )
     menu_items = cursor.fetchall()
+
+    # Fetch item sections
+    cursor.execute(
+        "SELECT id, section_name FROM item_section WHERE user_id = %s", 
+        (session['user_id'],)
+    )
+    item_section = cursor.fetchall()
+
     cursor.close()
     connection.close()
-    
-    menu_items = [{'id': item[0], 'name': item[1], 'description': item[2], 'price': item[3], 'image': base64.b64encode(item[4]).decode('utf-8')} for item in menu_items]
-    
-    return render_template('add_menu.html', menu_items=menu_items)
+
+    # Convert menu items to list with base64 image encoding
+    menu_items = [{'id': item[0], 'name': item[1], 'description': item[2], 'price': item[3], 'image': base64.b64encode(item[4]).decode('utf-8') if item[4] else None, 'section': item[5]} for item in menu_items]
+    item_section = [{'id': section[0], 'name': section[1]} for section in item_section]
+
+    return render_template('add_menu.html', menu_items=menu_items, item_section=item_section)
+
+@app.route('/add_section', methods=['POST'])
+def add_section():
+    if 'user_id' not in session:
+        return redirect(url_for('login'))
+
+    section_name = request.form['section_name']
+
+    connection = create_db_connection()
+    cursor = connection.cursor()
+
+    try:
+        # Check for duplicates before inserting
+        cursor.execute("SELECT COUNT(*) FROM item_section WHERE section_name = %s AND user_id = %s", (section_name, session['user_id']))
+        if cursor.fetchone()[0] > 0:
+            flash("Section already exists.", "error")
+        else:
+            cursor.execute(
+                "INSERT INTO item_section (section_name, user_id) VALUES (%s, %s)",
+                (section_name, session['user_id'])
+            )
+            connection.commit()
+    except mysql.connector.Error as err:
+        print(f"Error: {err}")
+        connection.rollback()
+    finally:
+        cursor.close()
+        connection.close()
+
+    return redirect(url_for('add_menu'))
+
+@app.route('/delete_section/<int:section_id>', methods=['POST'])
+def delete_section(section_id):
+    if 'user_id' not in session:
+        return redirect(url_for('login'))
+
+    connection = create_db_connection()
+    cursor = connection.cursor()
+
+    try:
+        # Set the section to NULL for items in this section
+        cursor.execute(
+            "UPDATE menu_items SET item_section = NULL WHERE item_section = (SELECT section_name FROM item_section WHERE id = %s AND user_id = %s)", 
+            (section_id, session['user_id'])
+        )
+
+        # Delete the section
+        cursor.execute("DELETE FROM item_section WHERE id = %s AND user_id = %s", (section_id, session['user_id']))
+        connection.commit()
+    except mysql.connector.Error as err:
+        print(f"Error: {err}")
+        connection.rollback()
+    finally:
+        cursor.close()
+        connection.close()
+
+    return redirect(url_for('add_menu'))
+
+
+
 
 @app.route('/remove_menu', methods=['GET', 'POST'])
 def remove_menu():
@@ -362,17 +504,43 @@ def remove_menu():
     
     return render_template('remove_menu.html', menu_items=menu_items)
 
+
+
 @app.route('/menu/<int:restaurant_id>')
 def view_menu(restaurant_id):
+    section_filter = request.args.get('section', 'all')
+    price_range_filter = request.args.get('price', 'all')
+    
     connection = create_db_connection()
     cursor = connection.cursor()
-    cursor.execute("SELECT item_name, item_description, item_price, item_image FROM menu_items WHERE user_id = %s", (restaurant_id,))
+
+    # Fetch unique sections
+    cursor.execute("SELECT DISTINCT item_section FROM menu_items WHERE user_id = %s", (restaurant_id,))
+    sections = cursor.fetchall()
+
+    query = "SELECT item_name, item_description, item_price, item_image, item_section FROM menu_items WHERE user_id = %s"
+    filters = [restaurant_id]
+
+    if section_filter != 'all':
+        query += " AND item_section = %s"
+        filters.append(section_filter)
+
+    if price_range_filter != 'all':
+        min_price, max_price = map(float, price_range_filter.split('-'))
+        query += " AND item_price BETWEEN %s AND %s"
+        filters.extend([min_price, max_price])
+
+    cursor.execute(query, tuple(filters))
     menu_items = cursor.fetchall()
     cursor.close()
     connection.close()
 
-    menu_items = [{'name': item[0], 'description': item[1], 'price': item[2], 'image': base64.b64encode(item[3]).decode('utf-8')} for item in menu_items]
-    return render_template('view_menu.html', menu_items=menu_items)
+    menu_items = [{'name': item[0], 'description': item[1], 'price': item[2], 'image': base64.b64encode(item[3]).decode('utf-8'), 'section': item[4]} for item in menu_items]
+    sections = [section[0] for section in sections]  # Extract section names from query results
+
+    return render_template('view_menu.html', menu_items=menu_items, sections=sections)
+
+
 
 @app.route('/add_to_cart', methods=['POST'])
 def add_to_cart():

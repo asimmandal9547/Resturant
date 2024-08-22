@@ -75,45 +75,52 @@
         }
     </style>
     <script>
+        // Opens new window for QR code and Edit/View pages
         function viewRegistrationData() {
             window.open("/edit_view", "_blank");
-        }
-
-        function viewAddMenu() {
-            window.open("/add_menu", "_blank");
-        }
-
-        function viewRemoveMenu() {
-            window.open("/remove_menu", "_blank");
-        }
-
-        function viewOrders() {
-            window.open("/orders", "_blank");
         }
 
         function viewQRCode() {
             window.open("/view_qr", "_blank");
         }
+
+        // Navigates in the same tab for the remaining pages
+        function viewAddMenu() {
+            window.location.href = "/add_menu";
+        }
+
+        function viewRemoveMenu() {
+            window.location.href = "/remove_menu";
+        }
+
+        function viewOrders() {
+            window.location.href = "/orders";
+        }
     </script>
 </head>
 <body>
     <div class="card-container">
+        <!-- Edit/View Card (opens in a new window) -->
         <div class="card" onclick="viewRegistrationData()">
             <img src="{{ url_for('static', filename='Images/Logos/user.png') }}" alt="Edit/View" class="card-image">
             <p>Edit/View</p>
         </div> 
+        <!-- Add Menu Card -->
         <div class="card" onclick="viewAddMenu()">
             <img src="{{ url_for('static', filename='Images/Logos/plus.png') }}" alt="Add Menu" class="card-image">
             <p>Add Menu</p>
         </div>
+        <!-- Remove Menu Card -->
         <div class="card" onclick="viewRemoveMenu()"> 
             <img src="{{ url_for('static', filename='Images/Logos/remove.png') }}" alt="Remove Menu" class="card-image">
             <p>Remove Menu</p>
         </div>
+        <!-- View Orders Card -->
         <div class="card" onclick="viewOrders()">
             <img src="{{ url_for('static', filename='Images/Logos/pages.png') }}" alt="View Orders" class="card-image">
             <p>View Orders</p>
         </div>
+        <!-- View QR Code Card (opens in a new window) -->
         <div class="card" onclick="viewQRCode()">
             <img src="{{ url_for('static', filename='Images/Logos/qr.png') }}" alt="View QR Code" class="card-image">
             <p>View QR Code</p>
