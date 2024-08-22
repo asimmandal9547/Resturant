@@ -4,4 +4,3 @@ mysql-connector-python
 flask-mail
 qrcode[pil]
 Pillow
-gunicorn

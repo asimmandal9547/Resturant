@@ -3,8 +3,9 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <link rel="icon" href="{{ url_for('static', filename='Images/favicon_user.ico') }}" type="image/x-icon">
     <title>Add Menu</title>
+    <link rel="icon" href="{{ url_for('static', filename='Images/favicon.ico') }}" type="image/x-icon">
+    <link rel="stylesheet" href="{{ url_for('static', filename='styles.css') }}">
     <style>
         body {
             font-family: Arial, sans-serif;
@@ -13,7 +14,7 @@
             padding: 0;
         }
         .edit-container {
-            max-width: 600px;
+            max-width: 800px;
             margin: 50px auto;
             padding: 20px;
             background-color: #fff;
@@ -34,6 +35,7 @@
         input[type="number"],
         textarea,
         input[type="file"],
+        select,
         button {
             width: 100%;
             padding: 10px;
@@ -46,14 +48,24 @@
             min-height: 100px;
         }
         button {
-            background-color: #ff7f50;
+            background-color: #ff7f50; /* Default button color */
             color: #fff;
             border: none;
             cursor: pointer;
             transition: background-color 0.3s ease;
         }
         button:hover {
-            background-color: #ff6347;
+            background-color: #ff6347; /* Button color on hover */
+        }
+        .add-section-button {
+            background-color: #458dff; /* Custom color for Add Section button */
+            color: #fff;
+            border: none;
+            cursor: pointer;
+            padding: 10px 20px;
+        }
+        .add-section-button:hover {
+            background-color: #45a049; /* Hover color for Add Section button */
         }
         .menu-items-container {
             margin-top: 30px;
@@ -82,6 +94,25 @@
             margin: 0;
             color: #666;
         }
+        .section-container {
+            margin-top: 30px;
+        }
+        .section-item {
+            background-color: #fff;
+            border: 1px solid #ddd;
+            border-radius: 8px;
+            padding: 10px;
+            margin-bottom: 10px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+        .section-item button {
+            background-color: #e57373;
+            color: #fff;
+            border: none;
+            cursor: pointer;
+        }
     </style>
 </head>
 <body>
@@ -92,6 +123,18 @@
             <textarea name="item_description" placeholder="Item Description" required></textarea>
             <input type="number" name="item_price" placeholder="Price" step="0.01" min="0" required>
             <input type="file" name="item_image" accept="image/*" required>
+            <select name="item_section">
+                <!-- Default sections -->
+                <option value="Veg">Veg</option>
+                <option value="Nonveg">Nonveg</option>
+                <option value="Drinks">Drinks</option>
+                <option value="Dessert">Dessert</option>
+                <!-- Dynamically added sections -->
+                {% for section in item_section %}
+                    <option value="{{ section.name }}">{{ section.name }}</option>
+                {% endfor %}
+                <option value="">-- No Section --</option>
+            </select>
             <button type="submit">Add Item</button>
         </form>
 
@@ -104,7 +147,25 @@
                         <h3>{{ item.name }}</h3>
                         <p>{{ item.description }}</p>
                         <p>Price: ₹{{ item.price }}</p>
+                        <p>Section: {{ item.section if item.section else 'None' }}</p>
                     </div>
+                </div>
+            {% endfor %}
+        </div>
+
+        <h2>Manage Sections</h2>
+        <form id="add-section-form" action="{{ url_for('add_section') }}" method="post">
+            <input type="text" name="section_name" placeholder="New Section Name" required>
+            <button type="submit" class="add-section-button">Add Section</button>
+        </form>
+
+        <div class="section-container">
+            {% for section in item_section %}
+                <div class="section-item">
+                    <span>{{ section.name }}</span>
+                    <form method="post" action="{{ url_for('delete_section', section_id=section.id) }}" style="display:inline;">
+                        <button type="submit">Delete</button>
+                    </form>
                 </div>
             {% endfor %}
         </div>
