@@ -67,11 +67,31 @@
         .menu-item button:hover {
             background-color: #ff6347;
         }
+        .home-button {
+            background-color: #007bff;
+            color: white;
+            padding: 10px 20px;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            text-align: center;
+            text-decoration: none;
+            display: flex;
+            justify-content: center;
+            font-size: 16px;
+            margin: 10px 0;
+            transition: background-color 0.3s ease;
+        }
+
+        .home-button:hover {
+            background-color: #0056b3;
+        }
     </style>
 </head>
 <body>
     <div class="edit-container">
         <h2>Remove Menu Item</h2>
+        <a href="{{ url_for('dashboard') }}" class="home-button">Click Here To Go Back To Home</a>
         <form action="{{ url_for('remove_menu') }}" method="post">
             <div class="menu-items-container">
                 {% for item in menu_items %}

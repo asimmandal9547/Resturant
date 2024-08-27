@@ -8,12 +8,12 @@
     <link rel="stylesheet" href="{{ url_for('static', filename='styles.css') }}">
     <style>
         body {
-            margin: 0;
-            padding: 0;
+            margin: 30px;
+            padding: 5px;
             display: flex;
             justify-content: center;
             align-items: center;
-            height: 100vh;
+            height: 200vh;
             background-color: #f8f8f8;
         }
 
@@ -22,10 +22,11 @@
             padding: 20px;
             border-radius: 10px;
             box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
-            width: 90%;
+            width: 100%;
             max-width: 600px;
             box-sizing: border-box;
             text-align: center;
+            margin: 0 10px;
         }
 
         h2 {
@@ -60,6 +61,7 @@
 
         .profile-picture img {
             max-width: 150px;
+            height: auto;
             border-radius: 50%;
             margin-bottom: 10px;
         }
@@ -101,6 +103,12 @@
             cursor: pointer;
         }
 
+        @media (max-width: 1024px) {
+            .edit-container {
+                width: 90%;
+            }
+        }
+
         @media (max-width: 768px) {
             .edit-container {
                 width: 95%;
@@ -125,10 +133,29 @@
                 max-width: 100px;
             }
         }
+        .home-button {
+            background-color: #007bff;
+            color: white;
+            padding: 10px 20px;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            text-align: center;
+            text-decoration: none;
+            display: inline-block;
+            font-size: 16px;
+            margin: 10px 0;
+            transition: background-color 0.3s ease;
+        }
+
+        .home-button:hover {
+            background-color: #0056b3;
+        }
     </style>
 </head>
 <body>
     <div class="edit-container">
+        <a href="{{ url_for('dashboard') }}" class="home-button">Home</a>
         <h2>Edit/View Registration Details</h2>
         <form id="edit-form" action="{{ url_for('update_profile') }}" method="post" enctype="multipart/form-data">
             <input type="text" name="full_name" placeholder="Full Name" value="{{ user.full_name }}" required>

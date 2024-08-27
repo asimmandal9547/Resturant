@@ -4,3 +4,4 @@ mysql-connector-python
 flask-mail
 qrcode[pil]
 Pillow
+pypi-cdecimal

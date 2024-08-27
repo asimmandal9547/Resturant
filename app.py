@@ -3,6 +3,7 @@ from werkzeug.security import generate_password_hash, check_password_hash
 from flask_mail import Mail, Message
 import mysql.connector
 from mysql.connector import Error
+from decimal import Decimal
 import secrets
 import qrcode
 import io
@@ -244,8 +245,12 @@ def login():
 @app.route('/dashboard')
 def dashboard():
     if 'username' in session:
-        return render_template('dashboard.html')
+        # Get the username from the session
+        username = session['username']
+        # Pass the username to the template
+        return render_template('dashboard.html', username=username)
     return redirect(url_for('home'))
+
 
 @app.route('/generate_qr')
 def generate_qr():
@@ -452,6 +457,7 @@ def add_section():
 
     return redirect(url_for('add_menu'))
 
+
 @app.route('/delete_section/<int:section_id>', methods=['POST'])
 def delete_section(section_id):
     if 'user_id' not in session:
@@ -480,8 +486,6 @@ def delete_section(section_id):
     return redirect(url_for('add_menu'))
 
 
-
-
 @app.route('/remove_menu', methods=['GET', 'POST'])
 def remove_menu():
     if 'user_id' not in session:
@@ -503,7 +507,6 @@ def remove_menu():
     menu_items = [{'id': item[0], 'name': item[1], 'description': item[2], 'image': base64.b64encode(item[3]).decode('utf-8')} for item in menu_items]
     
     return render_template('remove_menu.html', menu_items=menu_items)
-
 
 
 @app.route('/menu/<int:restaurant_id>')
@@ -541,7 +544,6 @@ def view_menu(restaurant_id):
     return render_template('view_menu.html', menu_items=menu_items, sections=sections)
 
 
-
 @app.route('/add_to_cart', methods=['POST'])
 def add_to_cart():
     try:
@@ -556,6 +558,7 @@ def add_to_cart():
         return jsonify({'success': True})
     except Exception as e:
         return jsonify({'error': str(e)}), 400
+    
 
 @app.route('/remove_from_cart', methods=['POST'])
 def remove_from_cart():
@@ -702,13 +705,60 @@ def download_order_history():
     return redirect(url_for('home'))
 
 
-@app.route('/clear_orders', methods=['POST'])
-def clear_orders():
-    if 'username' in session:
-        # This function will not delete orders from the database, just clear them from the session
-        session.pop('orders', None)  # Clearing the orders from session if stored there
-        return redirect(url_for('view_orders'))
-    return redirect(url_for('home'))
+@app.route('/view_bill/<int:order_id>', methods=['GET', 'POST'])
+def view_bill(order_id):
+    connection = create_db_connection()
+    cursor = connection.cursor()
+    
+    # Fetch all items for the given order_id
+    cursor.execute("""
+    SELECT order_items.item_name, order_items.item_price, orders.table_number
+    FROM orders
+    JOIN order_items ON orders.id = order_items.order_id
+    WHERE orders.id = %s
+    """, (order_id,))
+    
+    items = cursor.fetchall()
+    
+    if items:
+        # Convert item prices to Decimal
+        items = [(item[0], Decimal(item[1]), item[2]) for item in items]
+        
+        # Calculate total price
+        total_price = sum(item[1] for item in items)
+        table_number = items[0][2]
+        gst_included = False
 
+        if request.method == 'POST':
+            gst_included = 'apply_gst' in request.form  # Check if the checkbox is selected
+            if gst_included:
+                # Calculate GST (assuming 18%)
+                gst_amount = total_price * Decimal('0.18')
+                total_price += gst_amount
+
+        # Fetch restaurant name from users table using the session user_id
+        user_id = session.get('user_id')
+        if user_id:
+            cursor.execute("""
+            SELECT restaurant_name
+            FROM users
+            WHERE id = %s
+            """, (user_id,))
+            
+            result = cursor.fetchone()
+            restaurant_name = result[0] if result else "Unknown Restaurant"
+        else:
+            restaurant_name = "Unknown Restaurant"
+
+        cursor.close()
+        connection.close()
+
+        return render_template('bill.html', items=items, total_price=total_price, 
+                               table_number=table_number, gst_included=gst_included,
+                               restaurant_name=restaurant_name)
+    else:
+        cursor.close()
+        connection.close()
+        return "Order not found", 404
 if __name__ == '__main__':
     app.run(debug=True)

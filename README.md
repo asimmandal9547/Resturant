@@ -118,7 +118,6 @@ This is a Flask-based web application for managing restaurant user registrations
     user="your_mysql_username",
     password="your_mysql_password",
     database="user_auth_db",
-    port=3306
     ```
 
 6. Run the application:

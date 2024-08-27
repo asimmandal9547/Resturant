@@ -1,0 +1,179 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Bill - {{ restaurant_name }}</title>
+    <link rel="icon" href="{{ url_for('static', filename='Images/favicon.ico') }}" type="image/x-icon">
+    <style>
+        /* General Styles */
+        body {
+            margin: 0;
+            padding: 0;
+            font-family: Arial, sans-serif;
+            background-color: #f8f8f8;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+        }
+
+        /* Container for the bill */
+        .bill-container {
+            background-color: rgba(255, 255, 255, 0.8);
+            padding: 20px;
+            border-radius: 10px;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+            text-align: center;
+            width: 80%;
+            max-width: 800px;
+        }
+
+        /* Table Styles */
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 20px;
+        }
+
+        th, td {
+            padding: 10px;
+            border: 1px solid #ddd;
+            text-align: center;
+        }
+
+        th {
+            background-color: #f4f4f4;
+        }
+
+        /* Button Styles */
+        button {
+            padding: 10px 20px;
+            margin-top: 10px;
+            border: none;
+            border-radius: 5px;
+            background-color: #ff7f50;
+            color: #fff;
+            cursor: pointer;
+            transition: background-color 0.3s ease;
+        }
+
+        button:hover {
+            background-color: #ff6347;
+        }
+
+        .home-button {
+            background-color: #007bff;
+            color: white;
+            padding: 10px 20px;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            text-align: center;
+            text-decoration: none;
+            display: inline-block;
+            font-size: 16px;
+            margin: 10px 0;
+            transition: background-color 0.3s ease;
+        }
+
+        .home-button:hover {
+            background-color: #0056b3;
+        }
+
+        /* Print Button */
+        .print-button {
+            background-color: #28a745;
+            color: #fff;
+            padding: 10px 20px;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            text-align: center;
+            text-decoration: none;
+            display: inline-block;
+            font-size: 16px;
+            margin-top: 20px;
+            transition: background-color 0.3s ease;
+        }
+
+        .print-button:hover {
+            background-color: #218838;
+        }
+
+        /* Print Styles */
+        @media print {
+            .bill-container {
+                width: 100%;
+                box-shadow: none;
+            }
+
+            /* Hide non-printable content */
+            .home-button, .print-button {
+                display: none;
+            }
+
+            /* Ensure the bill container takes up the full page */
+            body {
+                margin: 0;
+                padding: 0;
+                display: block;
+                text-align: center;
+            }
+
+            .bill-container {
+                margin: 0;
+                padding: 20px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="bill-container">
+        <a href="{{ url_for('dashboard') }}" class="home-button">Home</a>
+        <h1>Bill - {{ restaurant_name }}</h1>
+        
+        <p><strong>Table Number:</strong> {{ table_number }}</p>
+        
+        <!-- Display Items -->
+        <table>
+            <tr>
+                <th>Item Name</th>
+                <th>Item Price</th>
+            </tr>
+            {% for item in items %}
+            <tr>
+                <td>{{ item[0] }}</td>
+                <td>{{ item[1] }}</td>
+            </tr>
+            {% endfor %}
+            <tr>
+                <td><strong>Total</strong></td>
+                <td><strong>{{ total_price }}</strong></td>
+            </tr>
+        </table>
+
+        <!-- GST Number Section -->
+        <div class="gst-section">
+            <form method="post">
+                <p>
+                    {% if gst_included %}
+                        GST Included (18%)
+                    {% else %}
+                        <label for="apply_gst">Add GST (18%): </label>
+                        <input type="checkbox" name="apply_gst" id="apply_gst">
+                        <button type="submit">Update</button>
+                    {% endif %}
+                </p>
+                <p>
+                    <label for="gst-number">GST Number (optional):</label>
+                    <input type="text" id="gst-number" name="gst-number" placeholder="Enter GST Number">
+                </p>
+            </form>
+        </div>
+
+        <!-- Print Button -->
+        <button class="print-button" onclick="window.print()">Print Bill</button>
+    </div>
+</body>
+</html>
