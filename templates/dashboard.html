@@ -7,18 +7,39 @@
     <link rel="icon" href="{{ url_for('static', filename='Images/favicon_user.ico') }}" type="image/x-icon">
     <link rel="stylesheet" href="{{ url_for('static', filename='styles.css') }}">
     <style>
-        /* Add the responsive styles here */
+        /* General body and layout styling */
         body {
             font-family: Arial, sans-serif;
             margin: 0;
             padding: 0;
             background-color: #f8f9fa;
             display: flex;
-            justify-content: center;
+            flex-direction: column;
             align-items: center;
             min-height: 100vh;
         }
 
+        /* Dashboard header styling */
+        h1 {
+            background-color: rgba(255, 255, 255, 0.7); /* Semi-transparent white */
+            padding: 10px 20px;
+            margin: 0;
+            font-size: 2em;
+            color: #333;
+            text-align: center;
+            width: 100%;
+        }
+
+        /* Username styling */
+        .username {
+            color: red;
+            font-size: 1.5em;
+            text-align: center;
+            margin-top: 10px;
+            margin-bottom: 20px;
+        }
+
+        /* Card container styling */
         .card-container {
             display: grid;
             grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
@@ -29,6 +50,7 @@
             box-sizing: border-box;
         }
 
+        /* Individual card styling */
         .card {
             background-color: #fffffff6;
             border-radius: 10px;
@@ -39,21 +61,25 @@
             transition: transform 0.3s ease;
         }
 
+        /* Card hover effect */
         .card:hover {
             transform: scale(1.05);
         }
 
+        /* Card image styling */
         .card-image {
             max-width: 100px;
             margin-bottom: 10px;
         }
 
+        /* Card paragraph styling */
         .card p {
             font-size: 1.1em;
             margin: 0;
             color: #333;
         }
 
+        /* Media queries for responsive design */
         @media (max-width: 600px) {
             .card-container {
                 grid-template-columns: 1fr 1fr;
@@ -75,16 +101,11 @@
         }
     </style>
     <script>
-        // Opens new window for QR code and Edit/View pages
-        function viewRegistrationData() {
-            window.open("/edit_view", "_blank");
-        }
-
+        // Functions to handle navigation
         function viewQRCode() {
             window.open("/view_qr", "_blank");
         }
 
-        // Navigates in the same tab for the remaining pages
         function viewAddMenu() {
             window.location.href = "/add_menu";
         }
@@ -96,31 +117,37 @@
         function viewOrders() {
             window.location.href = "/orders";
         }
+
+        function viewRegistrationData() {
+            window.location.href = "/edit_view";
+        }
     </script>
 </head>
 <body>
+    <!-- Dashboard Header -->
+    <h1>Dashboard</h1>
+
+    <!-- Dynamic Username Display -->
+    <p class="username">Welcome, {{ username }}</p>
+
+    <!-- Card Container -->
     <div class="card-container">
-        <!-- Edit/View Card (opens in a new window) -->
         <div class="card" onclick="viewRegistrationData()">
             <img src="{{ url_for('static', filename='Images/Logos/user.png') }}" alt="Edit/View" class="card-image">
             <p>Edit/View</p>
         </div> 
-        <!-- Add Menu Card -->
         <div class="card" onclick="viewAddMenu()">
             <img src="{{ url_for('static', filename='Images/Logos/plus.png') }}" alt="Add Menu" class="card-image">
             <p>Add Menu</p>
         </div>
-        <!-- Remove Menu Card -->
         <div class="card" onclick="viewRemoveMenu()"> 
             <img src="{{ url_for('static', filename='Images/Logos/remove.png') }}" alt="Remove Menu" class="card-image">
             <p>Remove Menu</p>
         </div>
-        <!-- View Orders Card -->
         <div class="card" onclick="viewOrders()">
             <img src="{{ url_for('static', filename='Images/Logos/pages.png') }}" alt="View Orders" class="card-image">
             <p>View Orders</p>
         </div>
-        <!-- View QR Code Card (opens in a new window) -->
         <div class="card" onclick="viewQRCode()">
             <img src="{{ url_for('static', filename='Images/Logos/qr.png') }}" alt="View QR Code" class="card-image">
             <p>View QR Code</p>
